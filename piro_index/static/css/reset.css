@@ -18,15 +18,14 @@ input, button {cursor:pointer; background:none; border:0;}
 .skip{display:none}
 
 body header {
-    background-color:#38517E;
+    
+    background: linear-gradient(90deg, #f0f4f8 0%, #dbeafe 50%, #5b99ff 100%);
+    
     position: -webkit-sticky; 
     position: sticky;
     top: 0;
     z-index: 999; 
     width: 100%;
-    animation: fade-in-blue linear forwards;
-    animation-timeline: scroll();
-    animation-range: 150px 500px;
 }
 @keyframes fade-in-blue {
     from {
@@ -42,14 +41,20 @@ body header {
 }
 
 body header .top-header {
-    display: flex; justify-content: space-around;
+    display: flex; justify-content: space-between;
     align-items: center;
-    height: 90px; padding: 20px 5%;
+    height: 90px; padding: 20px 0 ;
 }
 body header .top-header h1.site-name {
-    font-weight: 500; text-transform: uppercase;
-    color: #fff; font-family: 'Jost', sans-serif;
-    margin: 0; letter-spacing: 2px;
+    font-weight: bold; 
+    text-transform: uppercase;
+    /* color: #fff;  기존 흰색 주석 처리 */
+    color: #4a86e8; /* 사진과 비슷한 파란색 텍스트 */
+    font-family: 'Jost', sans-serif;
+    margin: 0; 
+    letter-spacing: 2px;
+    font-size: 40px;
+    margin-left: 100px;
     
 }
 body header .top-header .menus {
@@ -58,12 +63,15 @@ body header .top-header .menus {
 body header .top-header .menus ul {
     display: flex; list-style: none;
     font-family: 'Poppins', sans-serif; align-items: center;
+    margin-right: 50px;
 
 }
 body header .top-header .menus ul li a {
-    padding: 0 12px; color: #fff;
+    padding: 0 12px; 
+    /* color: #fff; 기존 흰색 주석 처리 */
+    color: #333; /* 배경이 밝으므로 글자는 어둡게 */
     text-decoration: none;
-    font-size: 16px;
+    font-size: 20px;
     font-weight: 500;
     font-family: 'Poppins', sans-serif;
 }
@@ -84,6 +92,10 @@ body header .top-header .menus ul li a[href="#Home"] {
 
 /* 메뉴 hover시 글자 색 변화 */
 body header .top-header .menus ul li a:hover {
-    color:#47b2e4;
+    color:#fff;
     transition: all 0.3s ease-in-out;
+}
+body header .top-header img.logo {
+    width: 70px;
+    margin-left: 50px ;
 }
