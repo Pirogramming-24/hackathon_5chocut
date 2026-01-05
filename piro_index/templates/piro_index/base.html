@@ -1,0 +1,27 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    
+    <link rel="stylesheet" href="{% static 'css/reset.css' %}">
+    <title>piro_index</title>
+</head>
+
+<body>
+    <header>
+        <div class="top-header">
+            <a href="#"><img src="static/images/logo.png" alt=""></a>
+            <h1 class="site-name">PIRO INDEX</h1>
+            <div class="menus">
+                <ul class="menus-list">
+                    <li><a href="{% url 'piro_index:login' %}" class="menu-Logout">Logout</a></li>
+                    <li><a href="{% url 'piro_index:login' %}" class="menu-Mypage">Mypage</a></li>
+                </ul>
+            </div>
+        </div>
+    </header>
+</body>
+
+</html>
