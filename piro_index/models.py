@@ -4,7 +4,8 @@ from django.contrib.auth.models import User
 
 class Video(models.Model):
     title = models.TextField()
-    video_path = models.CharField(max_length=256)
+    video_path = models.FileField(upload_to = "videos/")
+    thumbnail = models.ImageField(upload_to='thumbnails/', null=True, blank=True)
     created_at = models.DateTimeField(verbose_name='생성일자',auto_now_add=True)
     updated_at = models.DateTimeField(verbose_name='수정일자',auto_now=True)
 
