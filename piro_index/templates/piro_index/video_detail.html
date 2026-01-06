@@ -1,0 +1,45 @@
+{% extends 'piro_index/base.html' %}
+{% load static %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'video_detail.css' %}">
+    <script src="{% static 'js/video_detail.js' %}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="video_play">
+    <video id="lecture" controls poster="{% static 'images/video_error.png' %}">
+        <source src="{{ video.video_path.url }}" type="video/mp4">
+    </video>
+    <h3>{{ video.title }}</h3>
+</div>
+
+<div class="timeline_table">
+    <h6>📌 주요 개념 다시보기 📌</h6>
+    {% for timeline in timelines %}
+        <div class="index_content" onclick="seekTo({{ timeline.timetag }})">
+            <p class="main_concept">{{ timeline.content }}</p>
+            <p class="time">{{ timeline.timetag }}</p>
+        </div>
+    {% endfor %}
+</div>
+
+<div class="graph_section">
+    <canvas id="questionChart"></canvas> 
+
+    <script>
+        // 댓글마다 [시간, 공감수] 쌍으로 리스트를 만듭니다.
+        const empathyData = [
+            {% for c in comments %}
+                { time: {{ c.timetag }}, likes: {{ c.like_count }} }, // like_count는 모델의 공감수 필드명
+            {% endfor %}
+        ];
+        
+        // 이제 이 데이터를 함수에 던집니다.
+        drawEmpathyGraph(empathyData);
+    </script>
+</div>
+
+
+{% endblock %}
