@@ -1,0 +1,10 @@
+<div class="sw-container">
+    <div class="user-profile">
+        <span>{{ user.name|slice:":1" }}</span>
+    </div>
+    <div class="input-area">
+        <textarea id="comment-content" placeholder="이해가 가지 않는 질문을 등록해주세요! 운영진이 친절하게 답변해드립니다"></textarea>
+        <button type="button" id="comment-submit-btn" onclick="submitComment({{ video.pk }})">등록</button>
+
+    </div>
+</div>

@@ -1,0 +1,77 @@
+.account {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    justify-content: center;
+    align-items: center;
+}
+.account img.logo {
+    width: 150px;
+    height:180px;
+}
+.account .login-box {
+    width: 500px;
+    height: 350px;
+    border-radius: 15px;
+    border: 1px solid #d3e2f9;
+    background-color: #d3e2f9;
+}
+.account .login-box form {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    justify-content: space-around;
+    align-items: center;
+    height: 100%;
+}
+.account .login-box .id-pw {
+    margin: 10%;
+    background-color: #fff;
+    border-radius: 15px; 
+    overflow: hidden;
+}
+
+.account .login-box form .id-pw .id,
+.account .login-box form .id-pw .pw {
+    font-size: 15px;
+    padding: 5px;
+    height: 60px;
+    width: 100%;
+    border: 1px solid #d3e2f9;
+    outline:none;
+    transition: all 0.1s;
+    position: relative;
+}
+.account .login-box form .id-pw .id {
+    border-top-right-radius: 15px;
+    border-top-left-radius: 15px;
+}
+.account .login-box form .id-pw .id:focus,
+.account .login-box form .id-pw .pw:focus {
+    border: 2px solid #4a86e8;
+    z-index: 10;
+}
+.account .login-box form .id-pw .pw {
+    border-bottom-right-radius: 15px;
+    border-bottom-left-radius: 15px;
+}
+
+.account .login-box form .submit {
+    width:70%;
+    height: 50px;
+    background-color: #4a86e8;
+    color: white;
+    font-weight: 800;
+    font-size: 15px;
+    border-radius: 5px;
+}
+.account .login-box form .submit:disabled {
+    background-color: #dadada; /* 회색 */
+    color: #fff;
+    cursor: default; /* 마우스 올려도 변화 없음 */
+}
+
+.account .signup {
+    color: #777;
+    margin-top: 10px;
+}
