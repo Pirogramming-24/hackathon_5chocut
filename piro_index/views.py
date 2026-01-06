@@ -36,7 +36,6 @@ def login(request):
 
         # 3. 비밀번호 검사 (암호화된 비번 vs 입력한 비번 비교)
         if user and check_password(password, user.password):
-            # ✅ 로그인 성공! 세션에 '나 로그인했소' 도장 쾅 찍기
             request.session['user_id'] = user.id 
             
             # 4. 비디오 목록 페이지로 이동
@@ -82,6 +81,64 @@ def signup(request):
 
     # POST가 아닌 경우(그냥 페이지 접속)
     return render(request, 'piro_index/signup.html')
+
+# 마이페이지 - 정보수정
+def mypage(request):
+    # 1. 로그인 여부 확인 (비로그인자가 들어오면 쫓아냄)
+    user_id = request.session.get('user_id')
+    if not user_id:
+        return redirect('piro_index:login')
+    
+    # 2. 현재 로그인한 사용자 객체 가져오기
+    try:
+        user = Profile.objects.get(id=user_id)
+    except Profile.DoesNotExist:
+        return redirect('piro_index:login')
+
+    if request.method == 'POST':
+        # 1. 입력값 받아오기
+        new_login_id = request.POST.get('login_id') # 아이디 변경 요청
+        new_password = request.POST.get('password')
+        name = request.POST.get('name')
+        # role = request.POST.get('role')  <-- 삭제 (2번 요청)
+
+        # 2. 아이디 중복 체크 (아이디를 변경했을 때만!)
+        if new_login_id != user.login_id:
+            if Profile.objects.filter(login_id=new_login_id).exists():
+                # 이미 있는 아이디면 에러 메시지와 함께 다시 페이지 보여줌
+                context = {
+                    'user': user,
+                    'comments': Comment.objects.filter(user=user).select_related('video').order_by('-created_at'),
+                    'error': '이미 존재하는 아이디입니다.' # 에러 메시지 전달
+                }
+                return render(request, 'piro_index/mypage.html', context)
+            else:
+                user.login_id = new_login_id # 중복 없으면 아이디 변경
+
+        # 3. 이름 변경
+        user.name = name
+        
+        # 4. 역할 변경 코드 삭제함
+        # user.role = role 
+
+        # 5. 비밀번호 변경 (입력했을 때만)
+        if new_password and new_password.strip():
+            user.password = make_password(new_password)
+        
+        user.save() # 최종 저장
+        
+        return redirect('piro_index:mypage')
+    # --- [조회 로직] ---
+    # 3. 내가 쓴 댓글 가져오기 (최신순 정렬)
+    # select_related('video')를 쓰면 비디오 제목 가져올 때 DB를 또 안 찔러서 성능이 좋아집니다.
+    my_comments = Comment.objects.filter(user=user).select_related('video').order_by('-created_at')
+
+    context = {
+        'user': user,          # 내 정보
+        'comments': my_comments # 내 댓글 리스트
+    }
+    return render(request, 'piro_index/mypage.html', context)
+
 
 # 질문 등록(AJAX)
 def video_comment_create_ajax(request, pk):

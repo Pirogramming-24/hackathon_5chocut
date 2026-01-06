@@ -9,11 +9,7 @@ urlpatterns = [
     path('', views.login, name='root_login'),
     path('logout/', views.logout, name='logout'),
     path('signup/',views.signup, name= 'signup'),# 회원가입
-
-    # path('mypage/',views.mypage, name= 'mypage'), # 마이페이지
-    # path('<int:pk>/delete/',views.delete, name='delete'), # 탈퇴하기
-
-    # path('mypage/',views.mypage, name= 'mypage'), # 마이페이지
+    path('mypage/',views.mypage, name= 'mypage'), # 마이페이지
     # path('<int:pk>/delete/',views.delete, name='delete'), # 탈퇴하기
 
 

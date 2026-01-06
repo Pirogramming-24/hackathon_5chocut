@@ -46,23 +46,21 @@ body header .top-header {
     height: 90px; padding: 20px 0 ;
 }
 body header .top-header h1.site-name {
-    font-weight: bold; 
+    font-weight: 800; 
     text-transform: uppercase;
     /* color: #fff;  기존 흰색 주석 처리 */
     color: #4a86e8; /* 사진과 비슷한 파란색 텍스트 */
-    font-family: 'Jost', sans-serif;
     margin: 0; 
     letter-spacing: 2px;
     font-size: 40px;
-    margin-left: 100px;
+    margin-left: 90px;
     
 }
 body header .top-header .menus {
      display: flex; align-items: center;
 }
 body header .top-header .menus ul {
-    display: flex; list-style: none;
-    font-family: 'Poppins', sans-serif; align-items: center;
+    display: flex; list-style: none; align-items: center;
     margin-right: 50px;
 
 }
@@ -73,7 +71,6 @@ body header .top-header .menus ul li a {
     text-decoration: none;
     font-size: 20px;
     font-weight: 500;
-    font-family: 'Poppins', sans-serif;
 }
 
  /* 해당 기능에 대한 화면일 때 메뉴의 글자색 변화 */
