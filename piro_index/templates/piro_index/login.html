@@ -18,29 +18,28 @@
                 <button class="submit" disabled>로그인</button>
             </form>
         </div>
-        <a href="{% url 'piro_index:login' %}" class="signup">회원가입</a>
+        <a href="{% url 'piro_index:signup' %}" class="signup">회원가입</a>
     </div>
     <script>
+        <!-- 로그인 버튼 활성화 / 비활성화 -->
         document.addEventListener('DOMContentLoaded', function() {
-            // 1. 필요한 녀석들을 꼬집어 데려옵니다.
             const idInput = document.querySelector('.id');
             const pwInput = document.querySelector('.pw');
             const submitBtn = document.querySelector('.submit');
 
-            // 2. 검사하는 함수를 만듭니다.
             function checkInputs() {
                 const idValue = idInput.value.trim(); // trim()은 공백(스페이스바)만 있는 거 무시하려고 씀
                 const pwValue = pwInput.value.trim();
 
                 // 둘 다 내용이 있으면?
                 if (idValue.length > 0 && pwValue.length > 0) {
-                    submitBtn.disabled = false; // 버튼 봉인 해제! (CSS가 자동으로 파랗게 변함)
+                    submitBtn.disabled = false; 
                 } else {
-                    submitBtn.disabled = true;  // 다시 봉인 (회색으로 변함)
+                    submitBtn.disabled = true;  
                 }
             }
 
-            // 3. 아이디랑 비밀번호 창에 '입력(input)'이 발생할 때마다 검사 함수를 실행시킵니다.
+            // 아이디랑 비밀번호 창에 '입력(input)'이 발생할 때마다 검사 함수를 실행
             idInput.addEventListener('input', checkInputs);
             pwInput.addEventListener('input', checkInputs);
         });

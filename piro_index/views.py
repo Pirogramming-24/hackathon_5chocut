@@ -15,3 +15,6 @@ def video_detail(request, pk):
 
 def login(request):
     return render(request, 'piro_index/login.html')
+
+def signup(request):
+    return render(request, 'piro_index/signup.html')

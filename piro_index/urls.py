@@ -6,7 +6,7 @@ app_name = 'piro_index'
 urlpatterns = [
     #1. 로그인, 회원가입, 마이페이지 관련 주소
     path('',views.login, name = 'login'), # 로그인 (메인화면)
-    # path('signup/',views.signup, name= 'signup'),# 회원가입
+    path('signup/',views.signup, name= 'signup'),# 회원가입
     # path('mypage/',views.mypage, name= 'mypage'), # 마이페이지
     # path('<int:pk>/delete/',views.delete, name='delete'), # 탈퇴하기
 
