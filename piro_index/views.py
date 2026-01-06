@@ -6,6 +6,9 @@ from django.contrib.auth.hashers import make_password
 from django.contrib.auth.hashers import check_password
 from django.db.models import Count,Q
 from django.core.paginator import Paginator
+from django.db.models import Prefetch
+from django.contrib import messages
+import json
 
 #비디오 상세 페이지 조회
 def video_detail(request, pk):
@@ -243,3 +246,106 @@ def video_list(request):
     }
     
     return render(request, 'piro_index/video_list.html', context)
+
+def video_save_ajax(request, pk):
+    """찜하기 토글 (AJAX)"""
+    if request.method == 'POST':
+        user_id = request.session.get('user_id')
+        
+        if not user_id:
+            return JsonResponse({
+                'success': False, 
+                'message': '로그인이 필요합니다.'
+            })
+        
+        try:
+            user_profile = Profile.objects.get(id=user_id)
+            video = get_object_or_404(Video, pk=pk)
+            
+            # 이미 찜했는지 확인
+            save_obj = Save.objects.filter(user=user_profile, video=video).first()
+            
+            if save_obj:
+                # 이미 찜한 경우 - 찜 취소
+                save_obj.delete()
+                is_saved = False
+                message = '찜하기가 취소되었습니다.'
+            else:
+                # 찜하지 않은 경우 - 찜하기
+                Save.objects.create(user=user_profile, video=video)
+                is_saved = True
+                message = '찜하기가 완료되었습니다.'
+            
+            # 현재 찜하기 개수
+            save_count = Save.objects.filter(video=video).count()
+            
+            return JsonResponse({
+                'success': True,
+                'is_saved': is_saved,
+                'save_count': save_count,
+                'message': message
+            })
+            
+        except Profile.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'message': '사용자 정보를 찾을 수 없습니다.'
+            })
+    
+    return JsonResponse({'success': False, 'message': '잘못된 요청입니다.'})
+
+def video_detail(request, pk):
+
+    context = {
+        'video': target_video,
+        'comments': comments, 
+        'timelines': timelines,
+        'comment_count': comments.count(),
+    }
+
+    return render(request, 'video_detail.html', context)
+
+def video_create(request):
+    # 비디오 업로드 로직 구현
+    if request.method == 'POST':
+        # 기본 필드 받기
+        title = request.POST.get('title')
+        video_file= request.FILES.get('video_path')
+        thumbnail = request.FILES.get('thumbnail')
+        timeline_data = request.POST.get('timeline_data', '[]')  # JSON 형식의 타임라인 데이터
+        if not title:
+            messages.error(request, '세션 제목을 입력해주세요.')
+            return render(request, 'video_create.html')
+        
+        if not video_file:
+            messages.error(request, '비디오 파일을 업로드해주세요.')
+            return render(request, 'video_create.html')
+        
+        try:
+
+            video = Video.objects.create(
+                title=title,
+                video_file=video_file,
+                thumbnail=thumbnail if thumbnail else None,
+            )
+
+            try:
+                timelines = json.loads(timeline_data)
+                for timeline_item in timelines:
+                    Timeline.objects.create(
+                        video=video,
+                        timetag=timeline_item['time'],
+                        content=timeline_item['tag']
+                    )
+            except json.JSONDecodeError:
+                messages.warning(request, '타임라인 데이터 처리 중 오류가 발생했습니다.')
+            
+            messages.success(request, '비디오가 성공적으로 업로드되었습니다!')
+            return redirect('piro_index:video_detail', pk=video.pk)
+            
+        except Exception as e:
+            messages.error(request, f'업로드 중 오류가 발생했습니다: {str(e)}')
+            return render(request, 'video_create.html')
+    
+    # GET 요청일 때는 빈 폼 렌더링
+    return render(request, 'video_create.html')
