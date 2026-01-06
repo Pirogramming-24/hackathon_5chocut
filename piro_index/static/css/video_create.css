@@ -190,6 +190,12 @@ body {
   font-size: 20px;
 }
 
+.bookmark-icon {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+
 .time-input {
   width: 100px;
   border: 0;

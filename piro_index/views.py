@@ -33,7 +33,7 @@ def video_upload(request):
         
         try:
 
-            wideo-Video.objects.create(
+            video-Video.objects.create(
                 title=title,
                 video_file=video_file,
                 thumbnail=thumbnail if thumbnail else None,

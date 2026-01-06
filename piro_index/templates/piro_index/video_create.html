@@ -54,7 +54,9 @@
       <div class="field">
         <label class="field-label">타임라인 태그</label>
         <div class="timeline-bar">
-          <div class="bookmark">🔖</div>
+          <div class="bookmark">
+            <img src="{% static 'images/Video_Tag.png' %}" alt="북마크" class="bookmark-icon">
+          </div>
           <input type="text" class="time-input" id="timeInput" placeholder="00:00:00">
           <input type="text" class="tag-input" id="tagInput" placeholder="태그 내용">
           <button type="button" class="add-btn" id="addTagBtn">추가</button>
