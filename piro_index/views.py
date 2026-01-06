@@ -2,6 +2,8 @@ from django.shortcuts import render, get_object_or_404, redirect
 from .models import Video, Timeline, Comment, Profile, Reply, Save, Like
 from django.http import JsonResponse
 from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.hashers import make_password
+from django.contrib.auth.hashers import check_password
 
 #비디오 상세 페이지 조회
 def video_detail(request, pk):
@@ -19,18 +21,65 @@ def video_detail(request, pk):
         return render(request, 'video_detail.html', context)
 
 def login(request):
+    if request.method == 'POST':
+        # 1. HTML에서 아이디/비번 가져오기
+        login_id = request.POST.get('login_id')  # HTML input name과 맞춰야 함
+        password = request.POST.get('password')
+
+        # 2. 아이디가 있는지 확인
+        try:
+            user = Profile.objects.get(login_id=login_id)
+        except Profile.DoesNotExist:
+            user = None
+
+        # 3. 비밀번호 검사 (암호화된 비번 vs 입력한 비번 비교)
+        if user and check_password(password, user.password):
+            # ✅ 로그인 성공! 세션에 '나 로그인했소' 도장 쾅 찍기
+            request.session['user_id'] = user.id 
+            
+            # 4. 비디오 목록 페이지로 이동
+            return redirect('piro_index:video_list')
+        
+        else:
+            # 실패 시 에러 메시지 띄우기
+            context = {'error': '아이디 또는 비밀번호가 잘못되었습니다.'}
+            return render(request, 'piro_index/login.html', context)
+
+    # GET 요청 (그냥 접속)
     return render(request, 'piro_index/login.html')
 
+def logout(request):
+    # 세션에 저장된 모든 정보(로그인 정보 포함)를 싹 지웁니다.
+    request.session.flush() 
+    
+    # 로그아웃 후 다시 로그인 화면으로 보냅니다.
+    return redirect('piro_index:login')
+    
 def signup(request):
     if request.method == 'POST':
-        form = UserCreationForm(request.POST) # 이미 완성된 회원가입 폼
-        if form.is_valid():
-            form.save() # 알아서 비밀번호 암호화해서 DB에 저장해줌
-            return redirect('login')
-    else:
-        form = UserCreationForm()
-        
-    return render(request, 'piro_index/signup.html', {'form': form})
+        # 1. HTML에서 입력한 값들 꺼내오기 (name 속성과 일치해야 함)
+        login_id = request.POST.get('login_id')
+        raw_password = request.POST.get('password')
+        name = request.POST.get('name')
+        role = request.POST.get('role')
+
+        # 2. 아이디 중복 체크 (선택사항이지만 필수적인 로직)
+        if Profile.objects.filter(login_id=login_id).exists():
+            return render(request, 'piro_index/signup.html', {'error': '이미 사용 중인 아이디입니다.'})
+
+        # 3. DB에 저장 (CREATE)
+        Profile.objects.create(
+            login_id=login_id,
+            password=make_password(raw_password), 
+            name=name,
+            role=role
+        )
+
+        # 4. 저장 완료 후 로그인 페이지로 이동
+        return redirect('piro_index:login') # urls.py에 있는 로그인 url 이름
+
+    # POST가 아닌 경우(그냥 페이지 접속)
+    return render(request, 'piro_index/signup.html')
 
 # 질문 등록(AJAX)
 def video_comment_create_ajax(request, pk):

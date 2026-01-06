@@ -1,14 +1,13 @@
 from django.urls import path
 from . import views
-from django.contrib.auth import views as auth_views
 
 app_name = 'piro_index'
 
 urlpatterns = [
     #1. 로그인, 회원가입, 마이페이지 관련 주소
-    path('login/', auth_views.LoginView.as_view(template_name='piro_index/login.html'), name='login'), # 로그인
-    path('', auth_views.LoginView.as_view(template_name='piro_index/login.html'), name='login'),
-    path('logout/', auth_views.LogoutView.as_view(next_page='login'), name='logout'), # 로그아웃
+    path('login/', views.login, name='login'), # 로그인
+    path('', views.login, name='root_login'),
+    path('logout/', views.logout, name='logout'),
     path('signup/',views.signup, name= 'signup'),# 회원가입
 
     # path('mypage/',views.mypage, name= 'mypage'), # 마이페이지
