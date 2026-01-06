@@ -20,7 +20,7 @@ urlpatterns = [
     # #2. 비디오 
     # path('video/',views.video_list, name = 'video_list'), # 비디오리스트 - 메인페이지
     # path('video/create',views.video_create, name = 'video_create'), # 비디오 등록
-    # path('video/<int:pk>/',views.video_detail, name = 'video_detail'), # 비디오 상세페이지
+    path('video/<int:pk>/',views.video_detail, name = 'video_detail'), # 비디오 상세페이지
     # path('video/<int:pk>/update/',views.video_update, name = 'video_update'), # 비디오 수정 -> 등록폼
     # path('video/<int:pk>/delete/',views.video_delete, name = 'video_delete'), # 비디오 삭제 -> 리스트
 
