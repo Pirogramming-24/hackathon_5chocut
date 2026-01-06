@@ -56,7 +56,8 @@
     border-bottom-left-radius: 15px;
 }
 
-.account .login-box form a .submit {
+
+.account .login-box form .submit {
     width:70%;
     height: 50px;
     background-color: #4a86e8;
@@ -64,15 +65,11 @@
     font-weight: 800;
     font-size: 15px;
     border-radius: 5px;
+    transition: all 0.2s ease-in;
 }
-.account .login-box form a .submit {
-    width:70%;
-    height: 50px;
-    background-color: #4a86e8;
-    color: white;
-    font-weight: 800;
-    font-size: 15px;
-    border-radius: 5px;
+.account .login-box form .submit:hover {
+    
+    background-color: #3f71c3;
 }
 .account .login-box form .submit:disabled {
     background-color: #dadada; /* 회색 */

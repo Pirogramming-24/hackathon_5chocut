@@ -135,7 +135,10 @@ form {
     cursor: pointer;
     transition: background-color 0.2s;
 }
-
+.submit:not(:disabled):hover {
+    background-color: #356ebd; /* 기존 #4A86E8 보다 약간 진한 색 */
+    transition: 0.2s;
+}
 .submit:disabled {
     background-color: #dadada;
     cursor: default;
