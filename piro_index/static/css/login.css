@@ -56,7 +56,16 @@
     border-bottom-left-radius: 15px;
 }
 
-.account .login-box form .submit {
+.account .login-box form a .submit {
+    width:70%;
+    height: 50px;
+    background-color: #4a86e8;
+    color: white;
+    font-weight: 800;
+    font-size: 15px;
+    border-radius: 5px;
+}
+.account .login-box form a .submit {
     width:70%;
     height: 50px;
     background-color: #4a86e8;

@@ -4,6 +4,8 @@ from django.http import JsonResponse
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.hashers import check_password
+from django.db.models import Count,Q
+from django.core.paginator import Paginator
 
 #비디오 상세 페이지 조회
 def video_detail(request, pk):
@@ -176,3 +178,68 @@ def video_comment_update(request, pk):
         return JsonResponse({'status': 'error'}, status=403)
 
 
+def video_list(request):
+    """비디오 리스트 페이지 - 메인 페이지"""
+    # 정렬 기준 가져오기 (기본값: 빈 문자열)
+    sort_by = request.GET.get('sort', '')
+    
+    # 검색어 가져오기
+    search_query = request.GET.get('search', '')
+    
+    # 비디오 목록 가져오기
+    videos = Video.objects.all()
+    
+    # 검색 필터 적용
+    if search_query:
+        videos = videos.filter(
+            Q(title__icontains=search_query)
+        )
+    
+    # 각 비디오의 찜하기 개수 추가
+    videos = videos.annotate(save_count=Count('saves'))
+    
+    # 정렬 적용
+    if sort_by == 'latest':
+        videos = videos.order_by('-created_at')
+    elif sort_by == 'oldest':
+        videos = videos.order_by('created_at')
+    elif sort_by == 'saves':
+        videos = videos.order_by('-save_count')
+    else:
+        # 정렬 기준이 없으면 최신순으로 기본 정렬
+        videos = videos.order_by('-created_at')
+    
+    # 페이지네이션 (한 페이지당 6개)
+    paginator = Paginator(videos, 6)
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
+    
+    # 현재 로그인한 사용자가 찜한 비디오 ID 목록
+    user_id = request.session.get('user_id')
+    saved_video_ids = []
+    is_staff = False  # 기본값: 부원
+    
+    if user_id:
+        try:
+            user_profile = Profile.objects.get(id=user_id)
+            saved_video_ids = list(Save.objects.filter(user=user_profile).values_list('video_id', flat=True))
+            
+            # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            # role로 운영진/부원 구분 (비디오 등록 버튼 표시 여부)
+            # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            if user_profile.role == '운영진':
+                is_staff = True
+            else:
+                is_staff = False
+        except Profile.DoesNotExist:
+            pass
+    
+    context = {
+        'videos': page_obj,
+        'sort_by': sort_by,
+        'search_query': search_query,
+        'saved_video_ids': saved_video_ids,
+        'is_staff': is_staff,
+    }
+    
+    return render(request, 'piro_index/video_list.html', context)
