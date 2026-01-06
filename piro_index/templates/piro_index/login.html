@@ -6,16 +6,23 @@
 {% block content %} 
     <div class="account">
         <!-- 최상단 로고 -->
-        <img src="static/images/logo.png" alt="로고" class="logo">
+        <img src="{% static 'images/logo.png' %}" alt="로고" class="logo">
         <!-- 로그인 박스 -->
         <div class="login-box">
             <form method="POST">
                 {% csrf_token %}
-                <div class="id-pw">
-                    <input class="id" type="text" name="username" placeholder="아이디">
-                    <input class="pw" type="password" name="password" placeholder="비밀번호">
-                </div>
-                <button class="submit" disabled>로그인</button>
+    
+                {% if error %}
+                    <div style="color: red; margin-bottom: 10px;">{{ error }}</div>
+                {% endif %}
+
+            <div class="id-pw">
+                <input class="id" type="text" name="login_id" placeholder="아이디">
+        
+                <input class="pw" type="password" name="password" placeholder="비밀번호">
+             </div>
+    
+            <button class="submit">로그인</button>
             </form>
         </div>
         <a href="{% url 'piro_index:signup' %}" class="signup">회원가입</a>
@@ -31,7 +38,6 @@
                 const idValue = idInput.value.trim(); // trim()은 공백(스페이스바)만 있는 거 무시하려고 씀
                 const pwValue = pwInput.value.trim();
 
-                // 둘 다 내용이 있으면?
                 if (idValue.length > 0 && pwValue.length > 0) {
                     submitBtn.disabled = false; 
                 } else {
