@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import Video, Timeline, Comment, Profile, Reply, Save, Like
 from django.http import JsonResponse
+from django.contrib.auth.forms import UserCreationForm
 
 #비디오 상세 페이지 조회
 def video_detail(request, pk):
@@ -21,7 +22,15 @@ def login(request):
     return render(request, 'piro_index/login.html')
 
 def signup(request):
-    return render(request, 'piro_index/signup.html')
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST) # 이미 완성된 회원가입 폼
+        if form.is_valid():
+            form.save() # 알아서 비밀번호 암호화해서 DB에 저장해줌
+            return redirect('login')
+    else:
+        form = UserCreationForm()
+        
+    return render(request, 'piro_index/signup.html', {'form': form})
 
 # 질문 등록(AJAX)
 def video_comment_create_ajax(request, pk):
