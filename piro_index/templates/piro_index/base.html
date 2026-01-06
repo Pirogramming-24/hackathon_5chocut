@@ -7,6 +7,7 @@
     
     <link rel="stylesheet" href="{% static 'css/reset.css' %}">
     <title>piro_index</title>
+    {% = block extra_head %} {%endblock%}
 </head>
 
 <body>
@@ -22,6 +23,9 @@
             </div>
         </div>
     </header>
+
+    {% block content %}
+    {% endblock %}
 </body>
 
 </html>
