@@ -2,17 +2,17 @@
 {% load static %}
 
 {% block extra_head %}
-  <link rel="stylesheet" href="{% static 'css/video_upload.css' %}">
+  <link rel="stylesheet" href="{% static 'css/video_create.css' %}">
 {% endblock %}
 
 {% block content %}
 <div class="upload-wrap">
   <div class="upload-card">
     <div class="upload-card-top">
-      <h1 class="upload-title">Video Upload</h1>
+      <h1 class="upload-title">Video Create</h1>
     </div>
 
-    <form class="upload-form" method="post" enctype="multipart/form-data" action="{% url 'piro_index:video_upload' %}">
+    <form class="upload-form" method="post" enctype="multipart/form-data" action="{% url 'piro_index:video_create' %}">
       {% csrf_token %}
       
       <div class="top-row">
