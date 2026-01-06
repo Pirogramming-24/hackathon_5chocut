@@ -12,3 +12,6 @@ def video_detail(request, pk):
     }
 
     return render(request, 'video_detail.html', context)
+
+def login(request):
+    return render(request, 'piro_index/login.html')
