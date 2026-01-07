@@ -19,17 +19,17 @@ urlpatterns = [
     path('video/create',views.video_create, name = 'video_create'), # 비디오 등록
     path('video/<int:pk>/',views.video_detail, name = 'video_detail'), # 비디오 상세페이지
     path('video/<int:pk>/update/',views.video_update, name = 'video_update'), # 비디오 수정 -> 등록폼
-    # path('video/<int:pk>/delete/',views.video_delete, name = 'video_delete'), # 비디오 삭제 -> 리스트
+    path('video/<int:pk>/delete/',views.video_delete, name = 'video_delete'), # 비디오 삭제 -> 리스트
 
     # #3 찜하기
     path('video/<int:pk>/save/',views.video_save_ajax, name = 'video_save_ajax'), # 비디오 찜하기
 
     # #4 댓글
-    # path('video/<int:pk>/comment/', views.video_comment_create_ajax, name='video_comment_create_ajax'), # 질문 등록 
-    # path('comment/<int:pk>/reply/', views.comment_reply_create_ajax, name='comment_reply_create_ajax'), # 대댓글 등록
-    # path('comment/<int:pk>/update/', views.video_comment_update, name= 'video_comment_update'), # 댓글 수정
-    # path('comment/<int:pk>/delete/', views.video_comment_delete, name='video_comment_delete'), # 댓글 삭제
+    path('video/<int:pk>/comment/', views.video_comment_create_ajax, name='video_comment_create_ajax'), # 질문 등록 
+    path('comment/<int:pk>/reply/', views.comment_reply_create_ajax, name='comment_reply_create_ajax'), # 대댓글 등록
+    path('comment/<int:pk>/update/', views.video_comment_update, name= 'video_comment_update'), # 댓글 수정
+    path('comment/<int:pk>/delete/', views.video_comment_delete, name='video_comment_delete'), # 댓글 삭제
     # #5 좋아요 == 저도 궁금해요
-    # path('comment/<int:pk>/like/', views.comment_like_ajax, name='comment_like_ajax'),
+    path('comment/<int:pk>/like/', views.comment_like_ajax, name='comment_like_ajax'),
 
 ]
