@@ -405,4 +405,4 @@ def video_create(request):
             return render(request, 'video_create.html')
     
     # GET 요청일 때는 빈 폼 렌더링
-    return render(request, 'video_create.html')
+    return render(request, 'piro_index:video_create')
