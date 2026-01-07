@@ -1,0 +1,347 @@
+body {
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(180deg, #e3f2fd 0%, #bbdefb 100%);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  min-height: 100vh;
+}
+
+.upload-wrap {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 40px 16px;
+}
+
+.upload-card {
+  width: 100%;
+  max-width: 780px;
+  border-radius: 28px;
+  overflow: hidden;
+  background: linear-gradient(180deg, #c8e6ff 0%, #a8d4ff 50%, #8ec5ff 100%);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+}
+
+.upload-card-top {
+  background: rgba(255, 255, 255, 0.4);
+  padding: 24px;
+  backdrop-filter: blur(10px);
+}
+
+.upload-title {
+  margin: 0;
+  text-align: center;
+  font-size: 32px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: #1a1a1a;
+}
+
+.upload-form {
+  padding: 32px 28px 28px;
+}
+
+.top-row {
+  display: flex;
+  gap: 24px;
+  align-items: stretch;
+  margin-bottom: 24px;
+}
+
+/* 왼쪽 미리보기 */
+.preview-box {
+  flex: 0 0 340px;
+  height: 240px;
+  border-radius: 20px;
+  background: #1a1a1a;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.preview-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: none;
+}
+
+.preview-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #2c2c2c 0%, #1a1a1a 100%);
+}
+
+.preview-icon {
+  font-size: 56px;
+  opacity: 0.7;
+  filter: grayscale(1);
+}
+
+/* 오른쪽 파일 박스 */
+.file-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.file-box {
+  position: relative;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 20px 20px 18px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: 1;
+}
+
+.file-box-title {
+  text-align: center;
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: #2c2c2c;
+}
+
+.file-input {
+  display: none;
+}
+
+.file-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  border-radius: 14px;
+  background: #5b8bff;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  align-self: center;
+}
+
+.file-btn:hover {
+  background: #4a7ae8;
+}
+
+.file-name {
+  margin-top: 10px;
+  font-size: 11px;
+  color: rgba(0, 0, 0, 0.5);
+  text-align: center;
+  word-break: break-all;
+}
+
+.file-note {
+  margin-top: 6px;
+  font-size: 10px;
+  color: rgba(0, 0, 0, 0.4);
+  text-align: center;
+}
+
+/* 입력 필드 */
+.field {
+  margin-bottom: 20px;
+}
+
+.field-label {
+  display: block;
+  margin: 0 0 10px 4px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #2c2c2c;
+}
+
+.field-input {
+  width: 100%;
+  border: 0;
+  outline: none;
+  border-radius: 20px;
+  padding: 16px 20px;
+  background: rgba(255, 255, 255, 0.95);
+  font-size: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: box-shadow 0.2s;
+}
+
+.field-input:focus {
+  box-shadow: 0 4px 12px rgba(91, 139, 255, 0.15);
+}
+
+/* 타임라인 바 */
+.timeline-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.bookmark {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(91, 139, 255, 0.15);
+}
+
+.bookmark-icon {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+
+.time-input {
+  width: 100px;
+  border: 0;
+  outline: none;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 14px;
+  padding: 11px 12px;
+  font-size: 13px;
+  text-align: center;
+  transition: background 0.2s;
+}
+
+.time-input:focus {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.tag-input {
+  flex: 1;
+  border: 2px solid rgba(91, 139, 255, 0.3);
+  outline: none;
+  border-radius: 14px;
+  padding: 10px 14px;
+  font-size: 13px;
+  background: #fff;
+  transition: border-color 0.2s;
+}
+
+.tag-input:focus {
+  border-color: rgba(91, 139, 255, 0.6);
+}
+
+.add-btn {
+  border: 0;
+  cursor: pointer;
+  background: #5b8bff;
+  color: #fff;
+  border-radius: 14px;
+  padding: 11px 22px;
+  font-size: 13px;
+  font-weight: 600;
+  min-width: 70px;
+  transition: background 0.2s;
+}
+
+.add-btn:hover {
+  background: #4a7ae8;
+}
+
+/* 태그 리스트(칩) */
+.tag-list {
+  margin-top: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.tag-chip-time {
+  font-size: 12px;
+  font-weight: 600;
+  color: #5b8bff;
+}
+
+.tag-chip-text {
+  font-size: 13px;
+  color: #2c2c2c;
+}
+
+.tag-chip-x {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+  padding: 0 4px;
+  color: rgba(0, 0, 0, 0.4);
+  transition: color 0.2s;
+}
+
+.tag-chip-x:hover {
+  color: rgba(0, 0, 0, 0.7);
+}
+
+/* 버튼 그룹 */
+.button-group {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.cancel-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px 32px;
+  border-radius: 20px;
+  background: rgba(0, 0, 0, 0.08);
+  color: #666;
+  text-decoration: none;
+  font-size: 17px;
+  font-weight: 600;
+  transition: all 0.2s;
+  min-width: 120px;
+}
+
+.cancel-btn:hover {
+  background: rgba(0, 0, 0, 0.12);
+}
+
+/* 등록 버튼 */
+.submit-btn {
+  flex: 1;
+  border: 0;
+  cursor: pointer;
+  background: #5b8bff;
+  color: #fff;
+  padding: 18px 20px;
+  border-radius: 20px;
+  font-size: 17px;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(91, 139, 255, 0.3);
+  transition: all 0.2s;
+}
+
+.submit-btn:hover {
+  background: #4a7ae8;
+  box-shadow: 0 6px 16px rgba(91, 139, 255, 0.4);
+  transform: translateY(-1px);
+}
+
+.submit-btn:active {
+  transform: translateY(0);
+}

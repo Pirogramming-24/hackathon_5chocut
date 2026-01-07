@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block extra_head %}
-  <link rel="stylesheet" href="{% static 'css/video_upload.css' %}">
+  <link rel="stylesheet" href="{% static 'css/video_update.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -12,56 +12,52 @@
       <h1 class="upload-title">Video Update</h1>
     </div>
 
-    <form class="upload-form"
-          method="post"
-          enctype="multipart/form-data"
-          action="{% url 'piro_index:video_update' video.pk %}">
+    <form class="upload-form" method="POST" enctype="multipart/form-data" action="{% url 'piro_index:video_update' pk=video.pk %}">
       {% csrf_token %}
-
+      
       <div class="top-row">
-        <!-- 왼쪽: 비디오 미리보기 -->
+        <!-- 왼쪽: 비디오 미리보기 (기존 비디오 표시) -->
         <div class="preview-box">
-          <video class="preview-video" id="videoPreview" controls></video>
-          <div class="preview-placeholder" id="previewPlaceholder">
+          <video class="preview-video" id="videoPreview" controls style="display: block;">
+            <source src="{{ video.video_path.url }}" type="video/mp4">
+          </video>
+          <div class="preview-placeholder" id="previewPlaceholder" style="display: none;">
             <span class="preview-icon">📹</span>
           </div>
         </div>
 
         <!-- 오른쪽: 파일 업로드 -->
         <div class="file-col">
-          <!-- 영상 교체 -->
+          <!-- 영상 등록 -->
           <div class="file-box">
-            <div class="file-box-title">영상 교체</div>
-            <label for="videoFile" class="file-btn">파일 찾기</label>
+            <div class="file-box-title">영상 등록</div>
+            <label for="videoFile" class="file-btn">파일 변경</label>
             <input type="file" id="videoFile" name="video_path" class="file-input" accept="video/*">
-            <div class="file-name" id="videoFileName">
-              {% if video.video_path %}현재 파일: {{ video.video_path.name }}{% else %}선택된 파일 없음{% endif %}
-            </div>
+            <div class="file-name" id="videoFileName">{{ video.video_path.name|default:"현재 파일" }}</div>
+            <div class="file-note">파일을 선택하지 않으면 기존 파일 유지</div>
           </div>
 
-          <!-- 썸네일 교체 -->
+          <!-- 썸네일 등록 -->
           <div class="file-box">
-            <div class="file-box-title">썸네일 교체</div>
-            <label for="thumbnailFile" class="file-btn">파일 찾기</label>
+            <div class="file-box-title">썸네일 등록</div>
+            <label for="thumbnailFile" class="file-btn">파일 변경</label>
             <input type="file" id="thumbnailFile" name="thumbnail" class="file-input" accept="image/*">
             <div class="file-name" id="thumbnailFileName">
-              {% if video.thumbnail %}현재 파일: {{ video.thumbnail.name }}{% else %}선택된 파일 없음{% endif %}
+              {% if video.thumbnail %}
+                {{ video.thumbnail.name }}
+              {% else %}
+                등록된 썸네일 없음
+              {% endif %}
             </div>
-
-            {% if video.thumbnail %}
-              <div style="margin-top:10px;">
-                <img src="{{ video.thumbnail.url }}" alt="thumbnail" style="width:100%; border-radius:12px;">
-              </div>
-            {% endif %}
+            <div class="file-note">파일을 선택하지 않으면 기존 파일 유지</div>
           </div>
         </div>
       </div>
 
-      <!-- 제목 입력 (프리필) -->
+      <!-- 제목 입력 (기존 제목으로 prefill) -->
       <div class="field">
         <label class="field-label" for="videoTitle">세션 제목</label>
-        <input type="text" class="field-input" id="videoTitle" name="title"
-               value="{{ video.title }}" placeholder="제목을 입력하세요" required>
+        <input type="text" class="field-input" id="videoTitle" name="title" placeholder="제목을 입력하세요" value="{{ video.title }}" required>
       </div>
 
       <!-- 타임라인 태그 -->
@@ -75,84 +71,44 @@
           <input type="text" class="tag-input" id="tagInput" placeholder="태그 내용">
           <button type="button" class="add-btn" id="addTagBtn">추가</button>
         </div>
-
+        
+        <!-- 추가된 태그 리스트 -->
         <div class="tag-list" id="tagList"></div>
-
-        <!-- 프리필 JSON을 그대로 hidden에 넣어둠 -->
-        <input type="hidden" name="timeline_data" id="timelineData" value="{{ timeline_json|escapejs }}">
+        
+        <!-- hidden input으로 타임라인 데이터 전송 -->
+        <input type="hidden" name="timeline_data" id="timelineData">
       </div>
 
-      <button type="submit" class="submit-btn">수정 완료</button>
+      <!-- 버튼 그룹 -->
+      <div class="button-group">
+        <a href="{% url 'piro_index:video_detail' pk=video.pk %}" class="cancel-btn">취소</a>
+        <button type="submit" class="submit-btn">수정 완료</button>
+      </div>
     </form>
   </div>
 </div>
 
 <script>
-  // hidden에 들어있는 프리필 JSON 로드
-  let timelineArray = [];
-  const hiddenEl = document.getElementById('timelineData');
-  try {
-    const raw = hiddenEl.value || '[]';
-    timelineArray = JSON.parse(raw);
-  } catch (e) {
-    timelineArray = [];
-    hiddenEl.value = '[]';
-  }
+  // 기존 타임라인 데이터를 JavaScript 배열로 로드
+  let timelineArray = {{ timeline_json|safe }};
 
-  // DB 프리필 태그 칩 렌더
-  function addTagChip(timeStr, tag, seconds) {
-    const tagList = document.getElementById('tagList');
-    const chip = document.createElement('div');
-    chip.className = 'tag-chip';
-    chip.dataset.time = String(seconds);
-    chip.dataset.tag = tag;
-
-    chip.innerHTML = `
-      <span class="tag-chip-time">${timeStr}</span>
-      <span class="tag-chip-text">${tag}</span>
-      <button type="button" class="tag-chip-x">×</button>
-    `;
-
-    chip.querySelector('.tag-chip-x').addEventListener('click', () => {
-      removeTag(seconds, tag, chip);
-    });
-
-    tagList.appendChild(chip);
-  }
-
-  function syncHidden() {
-    hiddenEl.value = JSON.stringify(timelineArray);
-  }
-
-  function renderAllChips() {
-    document.getElementById('tagList').innerHTML = '';
+  // 페이지 로드 시 기존 타임라인 칩들 표시
+  window.addEventListener('DOMContentLoaded', function() {
+    // 기존 타임라인 칩 추가
     timelineArray.forEach(item => {
-      const seconds = item.time;
-      const timeStr = item.timeStr || formatSeconds(seconds);
-      addTagChip(timeStr, item.tag, seconds);
+      addTagChip(item.timeStr, item.tag);
     });
-    syncHidden();
-  }
+    
+    // hidden input 초기화
+    document.getElementById('timelineData').value = JSON.stringify(timelineArray);
+  });
 
-  // 기존 영상 미리보기 (MEDIA 세팅 되어있다는 전제)
-function initVideoPreview() {
-  const videoPreview = document.getElementById('videoPreview');
-  const placeholder = document.getElementById('previewPlaceholder');
-
-  {% if video.video_path %}
-    videoPreview.src = "{{ video.video_path|escapejs }}";
-    videoPreview.style.display = 'block';
-    placeholder.style.display = 'none';
-  {% endif %}
-}
-initVideoPreview();
-
-  // 비디오 파일 선택 시 미리보기(교체)
+  // 비디오 파일 선택 시 미리보기
   document.getElementById('videoFile').addEventListener('change', function(e) {
     const file = e.target.files[0];
     if (file) {
       document.getElementById('videoFileName').textContent = file.name;
-
+      
       const videoURL = URL.createObjectURL(file);
       const videoPreview = document.getElementById('videoPreview');
       videoPreview.src = videoURL;
@@ -161,7 +117,7 @@ initVideoPreview();
     }
   });
 
-  // 썸네일 파일 선택 시 파일명만 변경
+  // 썸네일 파일 선택 시
   document.getElementById('thumbnailFile').addEventListener('change', function(e) {
     const file = e.target.files[0];
     if (file) {
@@ -171,70 +127,71 @@ initVideoPreview();
 
   // 타임라인 태그 추가
   document.getElementById('addTagBtn').addEventListener('click', function() {
-    const timeInput = document.getElementById('timeInput').value.trim();
-    const tagInput = document.getElementById('tagInput').value.trim();
-
+    const timeInput = document.getElementById('timeInput').value;
+    const tagInput = document.getElementById('tagInput').value;
+    
     if (!timeInput || !tagInput) {
       alert('시간과 태그 내용을 모두 입력해주세요.');
       return;
     }
 
+    // 시간을 초로 변환
     const timeInSeconds = convertTimeToSeconds(timeInput);
-    if (timeInSeconds === null) {
-      alert('시간 형식이 올바르지 않습니다. 예: 12:30 또는 01:25:30');
-      return;
-    }
-
+    
+    // 배열에 추가
     timelineArray.push({
       time: timeInSeconds,
       tag: tagInput,
-      timeStr: normalizeTimeStr(timeInput, timeInSeconds)
+      timeStr: timeInput
     });
 
-    renderAllChips();
+    // 화면에 칩 추가
+    addTagChip(timeInput, tagInput);
 
+    // hidden input 업데이트
+    document.getElementById('timelineData').value = JSON.stringify(timelineArray);
+
+    // 입력 필드 초기화
     document.getElementById('timeInput').value = '';
     document.getElementById('tagInput').value = '';
   });
 
-  function removeTag(seconds, tag, chipEl) {
-    timelineArray = timelineArray.filter(item => !(item.time === seconds && item.tag === tag));
-    syncHidden();
-    chipEl.remove();
-  }
-
+  // 시간 문자열을 초로 변환 (HH:MM:SS -> seconds)
   function convertTimeToSeconds(timeStr) {
-    const parts = timeStr.split(':').map(p => p.trim());
+    const parts = timeStr.split(':');
     if (parts.length === 3) {
-      const h = parseInt(parts[0], 10), m = parseInt(parts[1], 10), s = parseInt(parts[2], 10);
-      if ([h,m,s].some(n => Number.isNaN(n))) return null;
-      return h * 3600 + m * 60 + s;
+      return parseInt(parts[0]) * 3600 + parseInt(parts[1]) * 60 + parseInt(parts[2]);
     } else if (parts.length === 2) {
-      const m = parseInt(parts[0], 10), s = parseInt(parts[1], 10);
-      if ([m,s].some(n => Number.isNaN(n))) return null;
-      return m * 60 + s;
-    } else if (parts.length === 1) {
-      const sec = parseInt(parts[0], 10);
-      if (Number.isNaN(sec)) return null;
-      return sec;
+      return parseInt(parts[0]) * 60 + parseInt(parts[1]);
     }
-    return null;
+    return parseInt(timeStr);
   }
 
-  function formatSeconds(seconds) {
-    seconds = parseInt(seconds || 0, 10);
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = seconds % 60;
-    return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+  // 태그 칩 추가
+  function addTagChip(time, tag) {
+    const tagList = document.getElementById('tagList');
+    const chip = document.createElement('div');
+    chip.className = 'tag-chip';
+    chip.innerHTML = `
+      <span class="tag-chip-time">${time}</span>
+      <span class="tag-chip-text">${tag}</span>
+      <button type="button" class="tag-chip-x" onclick="removeTag(this, '${time}', '${tag}')">×</button>
+    `;
+    tagList.appendChild(chip);
   }
 
-  function normalizeTimeStr(raw, seconds) {
-    // 사용자가 12:30 넣어도 저장/표시는 통일된 포맷이 깔끔함
-    return formatSeconds(seconds);
+  // 태그 제거
+  function removeTag(btn, time, tag) {
+    // 배열에서 제거
+    timelineArray = timelineArray.filter(item => 
+      !(item.timeStr === time && item.tag === tag)
+    );
+    
+    // hidden input 업데이트
+    document.getElementById('timelineData').value = JSON.stringify(timelineArray);
+    
+    // 화면에서 제거
+    btn.parentElement.remove();
   }
-
-  // 페이지 로드 시 DB 타임라인 프리필 렌더
-  renderAllChips();
 </script>
 {% endblock %}
