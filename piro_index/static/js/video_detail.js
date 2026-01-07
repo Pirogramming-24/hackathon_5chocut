@@ -36,7 +36,10 @@ function drawEmpathyGraph(data) {
             onClick: (event, elements) => {
                 if (elements.length > 0) {
                     const index = elements[0].index;
-                    seekTo(labels[index]); // 클릭 시 해당 시간으로 이동은 동일!
+                    // labels[index]는 원래 "70" 같은 문자열이나 숫자입니다.
+                    // 이를 명확하게 seekTo로 넘깁니다.
+                    const targetTime = labels[index]; 
+                    seekTo(targetTime); 
                 }
             },
             scales: {
@@ -49,22 +52,22 @@ function drawEmpathyGraph(data) {
     });
 }
 function seekTo(seconds, element) {
-    // 1. 영상 이동 로직
     const video = document.getElementById('lecture');
-    video.currentTime = seconds;
+    let targetSeconds = seconds;
+
+    // 만약 전달된 값이 "0:10" 같은 글자라면 숫자로 변환합니다.
+    if (typeof seconds === 'string' && seconds.includes(':')) {
+        const parts = seconds.split(':');
+        targetSeconds = (parseInt(parts[0]) * 60) + (parseInt(parts[1]) || 0);
+    }
+
+    video.currentTime = targetSeconds;
     video.play();
 
-    // 2. [핵심] 색상 유지 로직
-    // (1) 일단 모든 index_content에서 'selected' 클래스를 제거합니다.
+    // 아래 기존 색상 유지 로직은 그대로 두세요.
     const allItems = document.querySelectorAll('.index_content');
-    allItems.forEach(item => {
-        item.classList.remove('selected');
-    });
-
-    // (2) 내가 방금 클릭한 그 요소(element)에만 'selected' 클래스를 붙입니다.
-    if (element) {
-        element.classList.add('selected');
-    }
+    allItems.forEach(item => item.classList.remove('selected'));
+    if (element) { element.classList.add('selected'); }
 }
 
 // ----여기까지 시현-----
@@ -76,11 +79,35 @@ function seekTo(seconds, element) {
 // ========================================
 // 1. 댓글 등록
 // ========================================
+
+document.addEventListener('DOMContentLoaded', function() {  
+function secondsToMinSec() {
+        // 주요 개념 다시보기(.time)와 댓글 시간(.timetag)을 모두 찾음
+        document.querySelectorAll('.time, .timetag').forEach(el => {
+            const totalSeconds = parseInt(el.textContent);
+            if (!isNaN(totalSeconds)) {
+                const minutes = Math.floor(totalSeconds / 60);
+                const seconds = totalSeconds % 60;
+                // 1:05 처럼 표시
+                el.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            }
+        });
+    }
+    secondsToMinSec(); // 실행!
 document.getElementById('comment-submit-btn').addEventListener('click', function() {
     const content = document.getElementById('comment-content').value;
-    const timetag = document.getElementById('comment-timetag').value;
+    const timetagInput = document.getElementById('comment-timetag').value;
+    let finalSeconds = 0;
+    if (timetagInput.includes(':')) {
+        const parts = timetagInput.split(':');
+        finalSeconds = (parseInt(parts[0]) * 60) + (parseInt(parts[1]) || 0);
+    } else {
+        finalSeconds = parseInt(timetagInput) || 0;
+    }
+    const timetag = finalSeconds; // 계산된 초를 timetag 변수에 할당
     const imageFile = document.getElementById('comment-image').files[0];
-    
+        
+
     if (!content.trim()) {
         alert('내용을 입력해주세요');
         return;
@@ -112,7 +139,6 @@ document.getElementById('comment-submit-btn').addEventListener('click', function
     .catch(error => console.error('Error:', error));
 });
 
-
 // ========================================
 // 2. 답글 등록
 // ========================================
@@ -129,8 +155,9 @@ document.querySelectorAll('.reply-submit-btn').forEach(btn => {
         const formData = new FormData();
         formData.append('content', content);
         
-        fetch(`/comment/${commentId}/delete/`, {  // [수정] video -> comment 로 변경
+        fetch(`/comment/${commentId}/reply/`, {  // [수정] video -> comment 로 변경
             method: 'POST',
+            body: formData,
             headers: {
             'X-CSRFToken': getCookie('csrftoken')
             }
@@ -153,7 +180,7 @@ document.querySelectorAll('.like-btn').forEach(btn => {
     btn.addEventListener('click', function() {
         const commentId = this.dataset.commentId;
         
-        fetch(`/comment/${commentId}/like`, {
+        fetch(`/comment/${commentId}/like/`, {
             method: 'POST',
             headers: {
                 'X-CSRFToken': getCookie('csrftoken'),
@@ -228,8 +255,8 @@ document.querySelectorAll('.reply-write-btn').forEach(btn => {
 // ========================================
 document.querySelectorAll('.timetag').forEach(tag => {
     tag.addEventListener('click', function() {
-        const seconds = parseInt(this.textContent);
-        seekTo(seconds); // 기존 함수 재사용
+        const timeText = this.textContent; // "0:10" 글자 그대로 가져오기
+        seekTo(timeText);
     });
 });
 
@@ -247,7 +274,7 @@ document.querySelectorAll('.btn-delete').forEach(btn => {
         
         const commentId = this.dataset.commentId;
         
-        fetch(`/video/${commentId}/delete/`, {
+        fetch(`/comment/${commentId}/delete/`, {
             method: 'POST',
             headers: {
                 'X-CSRFToken': getCookie('csrftoken')
@@ -265,7 +292,7 @@ document.querySelectorAll('.btn-delete').forEach(btn => {
     });
 });
 
-
+});
 // ========================================
 // 유틸리티: CSRF 토큰 가져오기
 // ========================================

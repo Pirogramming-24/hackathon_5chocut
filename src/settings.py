@@ -121,3 +121,6 @@ STATIC_URL = 'static/'
 ALLOWED_HOSTS = ['*']
 MEDIA_URL = '/media/' 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

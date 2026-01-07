@@ -174,17 +174,28 @@ def mypage(request):
 # 질문 등록(AJAX)
 def video_comment_create_ajax(request, pk):
     if request.method == 'POST':
+        # 1. 세션에서 로그인한 유저의 ID를 가져옵니다.
+        user_id = request.session.get('user_id')
+        if not user_id:
+            return JsonResponse({'status': 'error', 'message': '로그인이 필요합니다.'}, status=401)
+        
+        # 2. 해당 ID로 실제 Profile 객체를 찾습니다.
+        user_profile = get_object_or_404(Profile, id=user_id)
         target_video = get_object_or_404(Video, pk=pk)
         
-        # [수정] request.FILES.get('image')를 추가해야 이미지를 받습니다.
+        # 3. timetag가 빈 문자열로 올 경우를 대비해 숫자로 변환합니다.
+        raw_timetag = request.POST.get('timetag', '0')
+        timetag = int(raw_timetag) if raw_timetag and raw_timetag.isdigit() else 0
+
         image = request.FILES.get('image')
         
+        # 4. request.user 대신 위에서 찾은 user_profile을 넣어줍니다.
         new_comment = Comment.objects.create(
-            user=request.user,
+            user=user_profile, 
             video=target_video,
             content=request.POST.get('content'),
-            timetag=request.POST.get('timetag', 0),
-            image=image  # [수정] 모델 필드명(image)에 맞춰서 저장
+            timetag=timetag,
+            image=image
         )
         
         return JsonResponse({
@@ -192,83 +203,94 @@ def video_comment_create_ajax(request, pk):
             'commentId': new_comment.pk,
             'content': new_comment.content,
             'timetag': new_comment.timetag,
-            'user_name': request.user.name,
-            'role': request.user.role,
-            # 이미지가 있을 경우 URL도 같이 보내줘야 바로 화면에 띄울 수 있습니다 (선택사항)
+            'user_name': user_profile.name, # request.user.name 대신 수정
+            'role': user_profile.role,      # request.user.role 대신 수정
             'image_url': new_comment.image.url if new_comment.image else None
-        })
-    
+        })    
 
     # 대댓글(답글) 등록 (AJAX)
 def comment_reply_create_ajax(request, pk):
-        if request.method == 'POST':
-            parent_comment = get_object_or_404(Comment, pk=pk) #댓글의 pk
+    if request.method == 'POST':
+        # 세션에서 프로필 가져오기
+        user_id = request.session.get('user_id')
+        user_profile = get_object_or_404(Profile, id=user_id) 
 
-            new_reply = Reply.objects.create( #Reply 테이블에 추가
-                user=request.user,
-                comment=parent_comment,
-                video=parent_comment.video,
-                content=request.POST.get('content')
-            )
+        parent_comment = get_object_or_404(Comment, pk=pk)
+
+        new_reply = Reply.objects.create(
+            user=user_profile, # request.user 대신 수정
+            comment=parent_comment,
+            video=parent_comment.video,
+            content=request.POST.get('content')
+        )
              
-            return JsonResponse({ # 작업이 끝난 후 필요한 데이터만 JS에 보내줌
-                'status': 'success',
-                'content': new_reply.content,
-                'user_name': request.user.name,
-                'role': request.user.role # 답글도 작성자 역할에 따라 색 구분 가능
-            })
+        return JsonResponse({
+            'status': 'success',
+            'content': new_reply.content,
+            'user_name': user_profile.name, # 수정
+            'role': user_profile.role      # 수정
+        })
 
 
 
     # 나도 궁금해요 토글
 def comment_like_ajax(request, pk):
-        
-        comment = get_object_or_404(Comment, pk=pk) # 좋아요를 누른 댓글이 DB에 있는지 확인 후 담기
-        
-        like_obj, created = Like.objects.get_or_create( # Like 테이블에서 이 유저가 해당 댓글에 누른 기록이 있는지 확인, 객체, 새로 만들었다면 TRUE 이미 있어서 찾기만 했다면 FALSE가 저장 
-            user=request.user, 
-            comment=comment, 
-            video=comment.video
-        )
-        
-        if not created: # 이미 좋아요를 눌렀다면 취소
-            like_obj.delete()
-            comment.like_count -= 1
-        else: # 처음 누르는 거라면 추가
-            comment.like_count += 1
-        
-        comment.save()
-        
-        return JsonResponse({ 
-            'status': 'success',
-            'like_count': comment.like_count # 변경된 좋아요 수를 반환하여 실시간 업데이트 새로고침 없이
-        })
+    user_id = request.session.get('user_id')
+    user_profile = get_object_or_404(Profile, id=user_id) # 프로필 가져오기
+
+    comment = get_object_or_404(Comment, pk=pk)
+    
+    # user=user_profile로 수정
+    like_obj, created = Like.objects.get_or_create( 
+        user=user_profile, 
+        comment=comment, 
+        video=comment.video
+    )
+    
+    if not created:
+        like_obj.delete()
+        comment.like_count -= 1
+    else:
+        comment.like_count += 1
+    
+    comment.save()
+    
+    return JsonResponse({ 
+        'status': 'success',
+        'like_count': comment.like_count 
+    })
 
 
     # 운영진 권한 기반 삭제 
 def video_comment_delete(request, pk):
-        comment = get_object_or_404(Comment, pk=pk)
-        
-        # 유저의 role이 운영진인 경우에만 삭제가 가능하도록
-        if request.user.role == '운영진':
-            video_pk = comment.video.pk #댓글을 지우기 전에, 이 댓글이 달려있던 비디오의 번호를 미리 메모
-            comment.delete()
-            return redirect('piro_index:video_detail', pk=video_pk)
-        
-        # 운영진이 아닐 경우 에러 메시지 반환
-        return JsonResponse({'status': 'error', 'message': '운영진만 삭제할 수 있습니다.'}, status=403)
+    user_id = request.session.get('user_id')
+    user_profile = get_object_or_404(Profile, id=user_id) # 프로필 가져오기
+    
+    comment = get_object_or_404(Comment, pk=pk)
+    
+    if user_profile.role == '운영진': # 수정
+        comment.delete()
+        # redirect 대신 JSON을 돌려줘야 JS가 안 터집니다!
+        return JsonResponse({'status': 'success'}) 
+    
+    return JsonResponse({'status': 'error', 'message': '운영진만 삭제할 수 있습니다.'}, status=403)
+
 
     # 운영진 권한 기반 수정
 def video_comment_update(request, pk):
-        comment = get_object_or_404(Comment, pk=pk)
-        
-        # 수정 또한 운영진 권한이 필요합니다.
-        if request.user.role == '운영진' and request.method == 'POST':
-            comment.content = request.POST.get('content')
-            comment.save()
-            return JsonResponse({'status': 'success', 'content': comment.content})
-        
-        return JsonResponse({'status': 'error'}, status=403)
+    # 1. 세션에서 현재 로그인한 유저의 프로필을 가져옵니다.
+    user_id = request.session.get('user_id')
+    user_profile = get_object_or_404(Profile, id=user_id)
+    
+    comment = get_object_or_404(Comment, pk=pk)
+    
+    # 2. request.user 대신 user_profile의 역할을 확인합니다.
+    if user_profile.role == '운영진' and request.method == 'POST':
+        comment.content = request.POST.get('content')
+        comment.save()
+        return JsonResponse({'status': 'success', 'content': comment.content})
+    
+    return JsonResponse({'status': 'error', 'message': '권한이 없습니다.'}, status=403)
 
 
 def video_list(request):
@@ -523,10 +545,10 @@ def video_update(request, pk):
     ]
     timeline_json = json.dumps(timeline_list, ensure_ascii=False)
 
-    return render(request, "video_update.html", {
-        "video": video,
-        "timeline_json": timeline_json,
-    })
+    return render(request, "piro_index/video_update.html", {
+    "video": video,
+    "timeline_json": timeline_json,
+})
 
 
 def video_delete(request, pk):

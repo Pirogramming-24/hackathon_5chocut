@@ -1,111 +1,120 @@
-{% extends 'piro_index/base.html' %}
-{% load static %}
+    {% extends 'piro_index/base.html' %}
+    {% load static %}
 
-{% block extra_head %}
-    <link rel="stylesheet" href="{% static 'css/video_detail.css' %}">
-    <script src="{% static 'js/video_detail.js' %}"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-{% endblock %}
+    {% block extra_head %}
+        <link rel="stylesheet" href="{% static 'css/video_detail.css' %}">
+        <script src="{% static 'js/video_detail.js' %}"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    {% endblock %}
 
-{% block content %}
-{% if is_staff %}
-<div class="admin-controls">
-    <a href="{% url 'piro_index:video_update' video.pk %}" class="btn-edit-link">
-        <button type="button" class="btn-edit-link">영상 수정</button>
-    </a>
-    <form action="{% url 'piro_index:video_delete' video.pk %}" method="POST" 
-        onsubmit="return confirm('정말로 이 영상을 삭제하시겠습니까?');" style="display:inline;">
-        {% csrf_token %}
-    <button type="submit" class="btn-delete-link">영상 삭제</button>
-    </form>
-</div>
-{% endif %}
-<div class="top">
-    <div class="video_play">
-        <video id="lecture" controls poster="{% static 'images/video_error.png' %}">
-            <source src="{{ video.video_path.url }}" type="video/mp4">
-        </video>
-        <h3>{{ video.title }}</h3>
+    {% block content %}
+    {% if is_staff %}
+    <div class="admin-controls">
+        <a href="{% url 'piro_index:video_update' video.pk %}" class="btn-edit-link">
+            <button type="button" class="btn-edit-link-">영상 수정</button>
+        </a>
+        <form action="{% url 'piro_index:video_delete' video.pk %}" method="POST" 
+            onsubmit="return confirm('정말로 이 영상을 삭제하시겠습니까?');" style="display:inline;">
+            {% csrf_token %}
+        <button type="submit" class="btn-delete-link">영상 삭제</button>
+        </form>
     </div>
-
-    <div class="timeline_table">
-        <h6>📌 주요 개념 다시보기 📌</h6>
-        {% for timeline in timelines %}
-            <div class="index_content" onclick="seekTo({{ timeline.timetag }}, this)">
-                <p class="main_concept">{{ timeline.content }}</p>
-                <p class="time">{{ timeline.timetag }}</p>
-            </div>
-        {% endfor %}
-    </div>
-</div>
-<div class="bottom">
-    <div class="left">
-        <div class="comment-container">
-            <div class="input-area">
-                <input type="number" id="comment-timetag" placeholder="시간(초)" value="0">
-                <textarea id="comment-content" placeholder="이해가 가지 않는 질문을 등록해주세요!"></textarea>
-                <input type="file" id="comment-image" accept="image/*">
-                <button type="button" id="comment-submit-btn">등록</button>
-            </div>
+    {% endif %}
+    <div class="top">
+        <div class="video_play">
+            <video id="lecture" controls poster="{% static 'images/video_error.png' %}">
+                <source src="{{ video.video_path.url }}" type="video/mp4">
+            </video>
+            <h3>{{ video.title }}</h3>
         </div>
 
-        <div id="comment-list-container">
-            {% for comment in comments %}
-            <div class="comment-item-card {% if comment.user.role == '운영진' %}staff-style{% endif %}" id="comment-{{ comment.pk }}">
-                
-                <div class="comment-header">
-                    <span class="timetag">{{ comment.timetag }}초</span>
-                    <strong>{{ comment.user.name }}</strong>
+        <div class="timeline_table">
+            <h6>📌 주요 개념 다시보기 📌</h6>
+            {% for timeline in timelines %}
+                <div class="index_content" onclick="seekTo({{ timeline.timetag }}, this)">
+                    <p class="main_concept">{{ timeline.content }}</p>
+                    <p class="time format-time">{{ timeline.timetag }}</p>
                 </div>
-
-                <div class="comment-body">
-                    <p>{{ comment.content }}</p>
-                </div>
-
-                <div class="btn-group">
-                    <button class="like-btn" data-comment-id="{{ comment.pk }}">
-                        👍 (<span class="like-count">{{ comment.like_count }}</span>)
-                    </button>
-
-                    {% if user.role == '운영진' %}
-                    <button class="btn-delete" data-comment-id="{{ comment.pk }}">삭제</button>
-                    {% endif %}
-
-                    <button class="reply-toggle-btn" data-comment-id="{{ comment.pk }}">
-                        답글 {{ comment.replies_list|length }}개
-                    </button>
-                </div>
-
-                <div class="reply-container" data-reply-id="{{ comment.pk }}">
-                    {% for reply in comment.replies_list %}
-                    <div class="reply-item {% if reply.user.role == '운영진' %}staff-style{% endif %}">
-                        <strong>{{ reply.user.name }}</strong>
-                        <p>{{ reply.content }}</p>
-                        <span class="reply-date">{{ reply.created_at }}</span>
-                    </div>
-                    {% endfor %}
-                </div>
-
-                <button class="reply-write-btn" data-comment-id="{{ comment.pk }}">답글 달기</button>
-                
-                <div class="reply-input-container" data-reply-input-id="{{ comment.pk }}">
-                    <textarea class="reply-content" placeholder="답글 작성..."></textarea>
-                    <button class="reply-submit-btn" data-comment-id="{{ comment.pk }}">등록</button>
-                </div>
-            </div> {% endfor %}
-        </div> </div> <div class="graph_section">
-        <canvas id="questionChart"></canvas> 
+            {% endfor %}
+        </div>
     </div>
-</div>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // views.py에서 보낸 JSON 데이터를 JS 변수로 받음
-        const graphData = {{ graph_data_json|safe }};
-        
-        // video_detail.js에 있는 함수 호출
-        if (typeof drawEmpathyGraph === 'function') {
-            drawEmpathyGraph(graphData);
-        }
-    });
-</script>
-{% endblock %}
+    <div class="bottom" data-video-id="{{ video.pk }}">
+        <div class="left">
+            <div class="comment-container">
+                <div class="input-area">
+                    <input type="number" id="comment-timetag" placeholder="시간(초)" value="0">
+                    <textarea id="comment-content" placeholder="이해가 가지 않는 질문을 등록해주세요!"></textarea>
+                    <input type="file" id="comment-image" accept="image/*">
+                    <button type="button" id="comment-submit-btn">등록</button>
+                </div>
+            </div>
+
+            <div id="comment-list-container">
+                {% for comment in comments %}
+                <div class="comment-item-card {% if comment.user.role == '운영진' %}staff-style{% endif %}" id="comment-{{ comment.pk }}">
+                    
+                    <div class="comment-header">
+                        <span class="timetag format-time">{{ comment.timetag }}</span>
+                        <strong>{{ comment.user.name }}</strong>
+                    </div>
+
+                    <div class="comment-body">
+                        <p>{{ comment.content }}</p>
+                        {% if comment.image %}
+                        <div class="comment-image-container">
+                            <img src="{{ comment.image.url }}" alt="댓글 이미지" class="comment-image">
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="btn-group">
+                        
+                        <button class="reply-write-btn" data-comment-id="{{ comment.pk }}">답글 달기</button>
+                        
+                        {% if is_staff %}
+                        <button class="btn-delete" data-comment-id="{{ comment.pk }}">삭제</button>
+                        {% endif %}
+
+                        <button class="like-btn" data-comment-id="{{ comment.pk }}">
+                            👍 (<span class="like-count">{{ comment.like_count }}</span>)
+                        </button>
+
+                        <button class="reply-toggle-btn" data-comment-id="{{ comment.pk }}">
+                            답글 {{ comment.replies_list|length }}개
+                        </button>
+                    </div>
+
+                    <div class="toggle-wrapper">
+                    <div class="reply-input-container" data-reply-input-id="{{ comment.pk }}">
+                        <textarea class="reply-content" placeholder="답글 작성..."></textarea>
+                        <button class="reply-submit-btn" data-comment-id="{{ comment.pk }}">등록</button>
+                    </div>
+                    <div class="reply-container" data-reply-id="{{ comment.pk }}">
+                        {% for reply in comment.replies_list %}
+                        <div class="reply-item {% if reply.user.role == '운영진' %}staff-style{% endif %}">
+                            <strong>{{ reply.user.name }}</strong>
+                            <p>{{ reply.content }}</p>
+                            <span class="reply-date">{{ reply.created_at }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    </div>
+
+                </div> {% endfor %}
+                
+            </div> </div> <div class="graph_section">
+            <canvas id="questionChart"></canvas> 
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // views.py에서 보낸 JSON 데이터를 JS 변수로 받음
+            const graphData = {{ graph_data_json|safe }};
+            
+            // video_detail.js에 있는 함수 호출
+            if (typeof drawEmpathyGraph === 'function') {
+                drawEmpathyGraph(graphData);
+            }
+        });
+    </script>
+    {% endblock %}
