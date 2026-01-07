@@ -129,11 +129,10 @@ document.querySelectorAll('.reply-submit-btn').forEach(btn => {
         const formData = new FormData();
         formData.append('content', content);
         
-        fetch(`/comment/${commentId}/reply/`, {
+        fetch(`/comment/${commentId}/delete/`, {  // [수정] video -> comment 로 변경
             method: 'POST',
-            body: formData,
             headers: {
-                'X-CSRFToken': getCookie('csrftoken')
+            'X-CSRFToken': getCookie('csrftoken')
             }
         })
         .then(response => response.json())

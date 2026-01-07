@@ -1,24 +1,28 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="ko">
-
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PIRO INDEX</title>
     
     <link rel="stylesheet" href="{% static 'css/reset.css' %}">
-    <title>piro_index</title>
-    {% block extra_head %} {% endblock %}
+    {% block extra_head %}
+    {% endblock %}
 </head>
-
 <body>
     <header>
         <div class="top-header">
             <img src="{% static 'images/logo.png' %}" alt="로고" class="logo">
-            <a href="{% url 'piro_index:login' %}"><h1 class="site-name">PIRO INDEX</h1></a>
+            <a href="{% url 'piro_index:video_list' %}"><h1 class="site-name">PIRO INDEX</h1></a>
             <div class="menus">
                 <ul class="menus-list">
-                    <li><a href="{% url 'piro_index:logout' %}" class="menu-Logout">Logout</a></li>
-                    <li><a href="{% url 'piro_index:mypage' %}" class="menu-Mypage">Mypage</a></li>
+                    {% if request.session.user_id %}
+                        <li><a href="{% url 'piro_index:logout' %}" class="menu-Logout">Logout</a></li>
+                        <li><a href="{% url 'piro_index:mypage' %}" class="menu-Mypage">Mypage</a></li>
+                    {% else %}
+                        <li><a href="{% url 'piro_index:login' %}" class="menu-Logout">Login</a></li>
+                    {% endif %}
                 </ul>
             </div>
         </div>
@@ -27,5 +31,4 @@
     {% block content %}
     {% endblock %}
 </body>
-
 </html>

@@ -9,35 +9,50 @@ from django.core.paginator import Paginator
 from django.db.models import Prefetch
 from django.contrib import messages
 import json
+from django.db import transaction
+from django.http import HttpResponse, JsonResponse 
+from django.urls import reverse
 
 #비디오 상세 페이지 조회
 def video_detail(request, pk):
-        target_video = get_object_or_404(Video, pk=pk)
-        comments = Comment.objects.filter(video=target_video).order_by('-like_count', '-created_at') # 정렬 2 질문: 좋아요(like_count) 많은 순 정렬   
-        for comment in comments:
-            comment.replies_list = comment.replies.all().order_by('created_at') # 정렬1 대댓글: 오래된 순 정렬
-        timelines = Timeline.objects.filter(video=target_video).order_by('timetag') # 북동쪽 타임라인 데이터 (시간순 정렬)
-
-        user_id = request.session.get('user_id')
-        is_staff = False  # 기본값
+    target_video = get_object_or_404(Video, pk=pk)
+    comments = Comment.objects.filter(video=target_video).order_by('-like_count', '-created_at')
     
-        if user_id:
-            try:
-                profile = Profile.objects.get(id=user_id)
-                if profile.role == "운영진":
-                    is_staff = True
-            except Profile.DoesNotExist:
-                is_staff = False
+    # 대댓글 가져오기
+    for comment in comments:
+        comment.replies_list = comment.replies.all().order_by('created_at')
+        
+    timelines = Timeline.objects.filter(video=target_video).order_by('timetag')
 
-        context = {
-            'video': target_video,
-            'comments': comments,
-            'timelines': timelines,
-            'comment_count': comments.count(),
-            'is_staff' : is_staff,}
-            
-        return render(request, 'piro_index/video_detail.html', context)
+    user_id = request.session.get('user_id')
+    is_staff = False
+    
+    if user_id:
+        try:
+            profile = Profile.objects.get(id=user_id)
+            if profile.role == "운영진":
+                is_staff = True
+        except Profile.DoesNotExist:
+            is_staff = False
 
+    # 그래프 데이터 생성
+    graph_data = []
+    for comment in comments:
+        graph_data.append({
+            'time': comment.timetag,
+            'likes': comment.like_count
+        })
+
+    context = {
+        'video': target_video,
+        'comments': comments,
+        'timelines': timelines,
+        'comment_count': comments.count(),
+        'is_staff': is_staff,
+        'graph_data_json': json.dumps(graph_data), # 그래프 데이터도 여기에 포함
+    }
+        
+    return render(request, 'piro_index/video_detail.html', context)
 def login(request):
     if request.method == 'POST':
         # 1. HTML에서 아이디/비번 가져오기
@@ -158,25 +173,30 @@ def mypage(request):
 
 # 질문 등록(AJAX)
 def video_comment_create_ajax(request, pk):
-        if request.method == 'POST': #요청이 POST인지 확인
-            target_video = get_object_or_404(Video, pk=pk) #video테이블에서 pk 내가 찾는거 가져오기
-            
-            # timetag와 content를 받아 저장 / commnet create 이건 장고 명령어로 데베에 한줄 저장
-            new_comment = Comment.objects.create(
-                user=request.user,
-                video=target_video,
-                content=request.POST.get('content'),
-                timetag=request.POST.get('timetag', 0)
-            )
-            
-            return JsonResponse({  #작업이 끝나면 필요한 데이터만 JSON에 담아 JS로 보내줌
-                'status': 'success',
-                'commentId': new_comment.pk,
-                'content': new_comment.content,
-                'timetag': new_comment.timetag,
-                'user_name': request.user.name,
-                'role': request.user.role # 부원/운영진 색 구분을 위한 데이터
-            })
+    if request.method == 'POST':
+        target_video = get_object_or_404(Video, pk=pk)
+        
+        # [수정] request.FILES.get('image')를 추가해야 이미지를 받습니다.
+        image = request.FILES.get('image')
+        
+        new_comment = Comment.objects.create(
+            user=request.user,
+            video=target_video,
+            content=request.POST.get('content'),
+            timetag=request.POST.get('timetag', 0),
+            image=image  # [수정] 모델 필드명(image)에 맞춰서 저장
+        )
+        
+        return JsonResponse({
+            'status': 'success',
+            'commentId': new_comment.pk,
+            'content': new_comment.content,
+            'timetag': new_comment.timetag,
+            'user_name': request.user.name,
+            'role': request.user.role,
+            # 이미지가 있을 경우 URL도 같이 보내줘야 바로 화면에 띄울 수 있습니다 (선택사항)
+            'image_url': new_comment.image.url if new_comment.image else None
+        })
     
 
     # 대댓글(답글) 등록 (AJAX)
@@ -253,6 +273,14 @@ def video_comment_update(request, pk):
 
 def video_list(request):
     """비디오 리스트 페이지 - 메인 페이지"""
+
+    # 1. 로그인 체크 로직 (이 부분 추가)
+    user_id = request.session.get('user_id')
+    if not user_id:
+        login_url = reverse('piro_index:login')
+        # 자바스크립트를 응답으로 보내서 알림창 띄우고 이동시킴
+        return HttpResponse(f"<script>alert('로그인이 필요합니다.'); location.href='{login_url}';</script>")
+    
     # 정렬 기준 가져오기 (기본값: 빈 문자열)
     sort_by = request.GET.get('sort', '')
     
@@ -427,11 +455,13 @@ def video_create(request):
             messages.error(request, f'업로드 중 오류가 발생했습니다: {str(e)}')
             return render(request, 'piro_index/video_create.html')
     
-<<<<<<< HEAD
-    # GET 요청일 때는 빈 폼 렌더링
-    return render(request, 'piro_index:video_create')
-=======
     return render(request, 'piro_index/video_create.html')
+
+def _seconds_to_hms(seconds):
+    seconds = int(seconds)
+    m, s = divmod(seconds, 60)
+    h, m = divmod(m, 60)
+    return f"{h:02d}:{m:02d}:{s:02d}"
 
 def video_update(request, pk):
     video = get_object_or_404(Video, pk=pk)
@@ -503,4 +533,3 @@ def video_delete(request, pk):
     target_video = get_object_or_404(Video, pk=pk)
     target_video.delete()
     return redirect('piro_index:video_list')
->>>>>>> code

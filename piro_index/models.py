@@ -28,12 +28,10 @@ class Profile(models.Model):
 class Comment(models.Model):
     user = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='comments')
     video = models.ForeignKey(Video, on_delete=models.CASCADE, related_name='comments')
-    
     timetag = models.IntegerField()
     content = models.TextField()
-    image_path = models.CharField(max_length=256, null=True, blank=True)
+    image = models.ImageField(upload_to='comment_images/', null=True, blank=True)
     like_count = models.IntegerField(default=0)
-    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

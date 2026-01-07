@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block extra_head %}
-    <link rel="stylesheet" href="{% static 'video_detail.css' %}">
+    <link rel="stylesheet" href="{% static 'css/video_detail.css' %}">
     <script src="{% static 'js/video_detail.js' %}"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 {% endblock %}
@@ -10,10 +10,10 @@
 {% block content %}
 {% if is_staff %}
 <div class="admin-controls">
-    <a href="{% url 'video_update' video.pk %}" class="btn-edit-link">
+    <a href="{% url 'piro_index:video_update' video.pk %}" class="btn-edit-link">
         <button type="button" class="btn-edit-link">영상 수정</button>
     </a>
-    <form action="{% url 'video_delete' video.pk %}" method="POST" 
+    <form action="{% url 'piro_index:video_delete' video.pk %}" method="POST" 
         onsubmit="return confirm('정말로 이 영상을 삭제하시겠습니까?');" style="display:inline;">
         {% csrf_token %}
     <button type="submit" class="btn-delete-link">영상 삭제</button>
@@ -97,4 +97,15 @@
         <canvas id="questionChart"></canvas> 
     </div>
 </div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // views.py에서 보낸 JSON 데이터를 JS 변수로 받음
+        const graphData = {{ graph_data_json|safe }};
+        
+        // video_detail.js에 있는 함수 호출
+        if (typeof drawEmpathyGraph === 'function') {
+            drawEmpathyGraph(graphData);
+        }
+    });
+</script>
 {% endblock %}
