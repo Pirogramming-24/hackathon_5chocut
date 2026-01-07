@@ -3,3 +3,8 @@ __pycache__/
 db.sqlite3
 .vscode/
 *.pycdb.sqlite3
+
+media/
+*.mp4
+*.mov
+*.avi
