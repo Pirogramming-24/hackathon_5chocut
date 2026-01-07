@@ -46,7 +46,7 @@
         <!-- 썸네일 -->
         <div class="thumbnail">
             {% if video.thumbnail %}
-                <img src="{{ video.thumbnail.url }}" alt="{{ video.title }}" class="thumbnail-img">
+                <img src="{{ .thumbnail.url }}" alt="{{ video.title }}" class="thumbnail-img">
             {% else %}
                 <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
                     <path d="M20 15L45 30L20 45V15Z" fill="#9CA3AF"/>

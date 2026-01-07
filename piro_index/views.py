@@ -17,13 +17,26 @@ def video_detail(request, pk):
         for comment in comments:
             comment.replies_list = comment.replies.all().order_by('created_at') # 정렬1 대댓글: 오래된 순 정렬
         timelines = Timeline.objects.filter(video=target_video).order_by('timetag') # 북동쪽 타임라인 데이터 (시간순 정렬)
+
+        user_id = request.session.get('user_id')
+        is_staff = False  # 기본값
+    
+        if user_id:
+            try:
+                profile = Profile.objects.get(id=user_id)
+                if profile.role == "운영진":
+                    is_staff = True
+            except Profile.DoesNotExist:
+                is_staff = False
+
         context = {
             'video': target_video,
             'comments': comments,
             'timelines': timelines,
-            'comment_count': comments.count(),}
+            'comment_count': comments.count(),
+            'is_staff' : is_staff,}
             
-        return render(request, 'video_detail.html', context)
+        return render(request, 'piro_index/video_detail.html', context)
 
 def login(request):
     if request.method == 'POST':
@@ -351,41 +364,49 @@ def video_save_ajax(request, pk):
     
     return JsonResponse({'success': False, 'message': '잘못된 요청입니다.'})
 
-def video_detail(request, pk):
-
-    context = {
-        'video': target_video,
-        'comments': comments, 
-        'timelines': timelines,
-        'comment_count': comments.count(),
-    }
-
-    return render(request, 'video_detail.html', context)
-
 def video_create(request):
-    # 비디오 업로드 로직 구현
+    """비디오 업로드 (운영진 전용)"""
+    
+    # 로그인 확인
+    user_id = request.session.get('user_id')
+    if not user_id:
+        messages.error(request, '로그인이 필요합니다.')
+        return redirect('piro_index:login')
+    
+    try:
+        user_profile = Profile.objects.get(id=user_id)
+        if user_profile.role != '운영진':
+            messages.error(request, '운영진만 비디오를 등록할 수 있습니다.')
+            return redirect('piro_index:video_list')
+    except Profile.DoesNotExist:
+        messages.error(request, '사용자 정보를 찾을 수 없습니다.')
+        return redirect('piro_index:login')
+    
     if request.method == 'POST':
-        # 기본 필드 받기
         title = request.POST.get('title')
-        video_file= request.FILES.get('video_path')
+        
+        # ⭐ HTML의 name="video_file"에 맞춰서!
+        video_file = request.FILES.get('video_file')  # ← video_file!
+        
         thumbnail = request.FILES.get('thumbnail')
-        timeline_data = request.POST.get('timeline_data', '[]')  # JSON 형식의 타임라인 데이터
+        timeline_data = request.POST.get('timeline_data', '[]')
+        
         if not title:
             messages.error(request, '세션 제목을 입력해주세요.')
-            return render(request, 'video_create.html')
+            return render(request, 'piro_index/video_create.html')
         
         if not video_file:
             messages.error(request, '비디오 파일을 업로드해주세요.')
-            return render(request, 'video_create.html')
+            return render(request, 'piro_index/video_create.html')
         
         try:
-
+            # ⭐ 모델의 video_path 필드에 저장!
             video = Video.objects.create(
                 title=title,
-                video_file=video_file,
+                video_path=video_file,  # ← video_path 필드에 저장!
                 thumbnail=thumbnail if thumbnail else None,
             )
-
+            
             try:
                 timelines = json.loads(timeline_data)
                 for timeline_item in timelines:
@@ -398,11 +419,19 @@ def video_create(request):
                 messages.warning(request, '타임라인 데이터 처리 중 오류가 발생했습니다.')
             
             messages.success(request, '비디오가 성공적으로 업로드되었습니다!')
-            return redirect('piro_index:video_detail', pk=video.pk)
+            
+            # ⭐ video_detail로 리다이렉트!
+            return redirect('piro_index:video_list')
             
         except Exception as e:
             messages.error(request, f'업로드 중 오류가 발생했습니다: {str(e)}')
-            return render(request, 'video_create.html')
+            return render(request, 'piro_index/video_create.html')
     
-    # GET 요청일 때는 빈 폼 렌더링
-    return render(request, 'video_create.html')
+    return render(request, 'piro_index/video_create.html')
+
+
+
+def video_delete(request, pk):
+    target_video = get_object_or_404(Video, pk=pk)
+    target_video.delete()
+    return redirect('piro_index:video_list')
