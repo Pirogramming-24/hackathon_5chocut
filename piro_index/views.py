@@ -14,16 +14,29 @@ from django.http import HttpResponse, JsonResponse
 from django.urls import reverse
 
 #비디오 상세 페이지 조회
+def format_time(seconds):
+    seconds = int(seconds)
+    m, s = divmod(seconds, 60)
+    h, m = divmod(m, 60)
+    return f"{h:02d}:{m:02d}:{s:02d}"
+
+# 비디오 상세 페이지
 def video_detail(request, pk):
     target_video = get_object_or_404(Video, pk=pk)
+    
+    # 댓글 가져오기
     comments = Comment.objects.filter(video=target_video).order_by('-like_count', '-created_at')
     
-    # 대댓글 가져오기
     for comment in comments:
+        comment.time_str = format_time(comment.timetag)  # HTML용 시:분:초 변수
         comment.replies_list = comment.replies.all().order_by('created_at')
-        
-    timelines = Timeline.objects.filter(video=target_video).order_by('timetag')
 
+    # 타임라인 가져오기
+    timelines = Timeline.objects.filter(video=target_video).order_by('timetag')
+    for timeline in timelines:
+        timeline.time_str = format_time(timeline.timetag) # HTML용 시:분:초 변수
+
+    # 로그인 정보 확인
     user_id = request.session.get('user_id')
     is_staff = False
     
@@ -33,9 +46,9 @@ def video_detail(request, pk):
             if profile.role == "운영진":
                 is_staff = True
         except Profile.DoesNotExist:
-            is_staff = False
+            pass
 
-    # 그래프 데이터 생성
+    # 그래프 데이터
     graph_data = []
     for comment in comments:
         graph_data.append({
@@ -49,10 +62,73 @@ def video_detail(request, pk):
         'timelines': timelines,
         'comment_count': comments.count(),
         'is_staff': is_staff,
-        'graph_data_json': json.dumps(graph_data), # 그래프 데이터도 여기에 포함
+        'graph_data_json': json.dumps(graph_data),
     }
         
     return render(request, 'piro_index/video_detail.html', context)
+
+
+# 댓글 등록 (AJAX)
+def video_comment_create_ajax(request, pk):
+    if request.method == 'POST':
+        # 로그인 체크
+        user_id = request.session.get('user_id')
+        if not user_id:
+             return JsonResponse({'status': 'error', 'message': '로그인이 필요합니다.'}, status=403)
+
+        target_video = get_object_or_404(Video, pk=pk)
+        user_profile = get_object_or_404(Profile, id=user_id) # 세션 ID로 유저 찾기
+
+        image = request.FILES.get('image')
+        
+        new_comment = Comment.objects.create(
+            user=user_profile,
+            video=target_video,
+            content=request.POST.get('content'),
+            timetag=request.POST.get('timetag', 0),
+            image=image 
+        )
+        
+        return JsonResponse({
+            'status': 'success',
+            'commentId': new_comment.pk,
+            'content': new_comment.content,
+            # [핵심] 등록 직후에도 시:분:초로 표시
+            'time_str': format_time(new_comment.timetag),
+            'timetag': new_comment.timetag,
+            'user_name': user_profile.name,
+            'role': user_profile.role,
+            'image_url': new_comment.image.url if new_comment.image else None
+        })
+    return JsonResponse({'status': 'error'}, status=400)
+
+
+# 대댓글 등록 (AJAX)
+def comment_reply_create_ajax(request, pk):
+    if request.method == 'POST':
+        user_id = request.session.get('user_id')
+        if not user_id:
+             return JsonResponse({'status': 'error', 'message': '로그인이 필요합니다.'}, status=403)
+
+        parent_comment = get_object_or_404(Comment, pk=pk)
+        user_profile = get_object_or_404(Profile, id=user_id)
+
+        new_reply = Reply.objects.create(
+            user=user_profile,
+            comment=parent_comment,
+            video=parent_comment.video,
+            content=request.POST.get('content')
+        )
+            
+        return JsonResponse({
+            'status': 'success',
+            'content': new_reply.content,
+            'user_name': user_profile.name,
+            'role': user_profile.role
+        })
+    return JsonResponse({'status': 'error'}, status=400)
+
+
 def login(request):
     if request.method == 'POST':
         # 1. HTML에서 아이디/비번 가져오기
@@ -169,55 +245,6 @@ def mypage(request):
         'comments': my_comments # 내 댓글 리스트
     }
     return render(request, 'piro_index/mypage.html', context)
-
-
-# 질문 등록(AJAX)
-def video_comment_create_ajax(request, pk):
-    if request.method == 'POST':
-        target_video = get_object_or_404(Video, pk=pk)
-        
-        # [수정] request.FILES.get('image')를 추가해야 이미지를 받습니다.
-        image = request.FILES.get('image')
-        
-        new_comment = Comment.objects.create(
-            user=request.user,
-            video=target_video,
-            content=request.POST.get('content'),
-            timetag=request.POST.get('timetag', 0),
-            image=image  # [수정] 모델 필드명(image)에 맞춰서 저장
-        )
-        
-        return JsonResponse({
-            'status': 'success',
-            'commentId': new_comment.pk,
-            'content': new_comment.content,
-            'timetag': new_comment.timetag,
-            'user_name': request.user.name,
-            'role': request.user.role,
-            # 이미지가 있을 경우 URL도 같이 보내줘야 바로 화면에 띄울 수 있습니다 (선택사항)
-            'image_url': new_comment.image.url if new_comment.image else None
-        })
-    
-
-    # 대댓글(답글) 등록 (AJAX)
-def comment_reply_create_ajax(request, pk):
-        if request.method == 'POST':
-            parent_comment = get_object_or_404(Comment, pk=pk) #댓글의 pk
-
-            new_reply = Reply.objects.create( #Reply 테이블에 추가
-                user=request.user,
-                comment=parent_comment,
-                video=parent_comment.video,
-                content=request.POST.get('content')
-            )
-             
-            return JsonResponse({ # 작업이 끝난 후 필요한 데이터만 JS에 보내줌
-                'status': 'success',
-                'content': new_reply.content,
-                'user_name': request.user.name,
-                'role': request.user.role # 답글도 작성자 역할에 따라 색 구분 가능
-            })
-
 
 
     # 나도 궁금해요 토글

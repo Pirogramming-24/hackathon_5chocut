@@ -3,109 +3,128 @@
 
 {% block extra_head %}
     <link rel="stylesheet" href="{% static 'css/video_detail.css' %}">
-    <script src="{% static 'js/video_detail.js' %}"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 {% endblock %}
 
 {% block content %}
-{% if is_staff %}
-<div class="admin-controls">
-    <a href="{% url 'piro_index:video_update' video.pk %}" class="btn-edit-link">
-        <button type="button" class="btn-edit-link">영상 수정</button>
-    </a>
-    <form action="{% url 'piro_index:video_delete' video.pk %}" method="POST" 
-        onsubmit="return confirm('정말로 이 영상을 삭제하시겠습니까?');" style="display:inline;">
-        {% csrf_token %}
-    <button type="submit" class="btn-delete-link">영상 삭제</button>
-    </form>
-</div>
-{% endif %}
-<div class="top">
-    <div class="video_play">
-        <video id="lecture" controls poster="{% static 'images/video_error.png' %}">
-            <source src="{{ video.video_path.url }}" type="video/mp4">
-        </video>
-        <h3>{{ video.title }}</h3>
+{{ graph_data_json|json_script:"graph-data" }}
+
+<div class="page-container" 
+     data-video-id="{{ video.pk }}"
+     data-comment-create-url="{% url 'piro_index:video_comment_create_ajax' video.pk %}">
+
+    {% if is_staff %}
+    <div class="admin-controls">
+        <a href="{% url 'piro_index:video_update' video.pk %}">
+            <button type="button">영상 수정</button>
+        </a>
+        <form action="{% url 'piro_index:video_delete' video.pk %}" method="POST" 
+            onsubmit="return confirm('정말로 삭제하시겠습니까?');" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit">영상 삭제</button>
+        </form>
+    </div>
+    {% endif %}
+
+    <div class="top-section">
+        <div class="video-area">
+            <video id="lecture" controls poster="{% static 'images/video_error.png' %}" style="width:100%;">
+                <source src="{{ video.video_path.url }}" type="video/mp4">
+            </video>
+            <h3>{{ video.title }}</h3>
+        </div>
+
+        <div class="timeline-area">
+            <h3>📌 주요 개념 타임라인</h3>
+            <div class="timeline-list">
+                {% for timeline in timelines %}
+                <div class="timeline-item" onclick="seekTo({{ timeline.timetag }}, this)">
+                    <span class="time-badge">{{ timeline.time_str }}</span>
+                    <span class="content-text">{{ timeline.content }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
     </div>
 
-    <div class="timeline_table">
-        <h6>📌 주요 개념 다시보기 📌</h6>
-        {% for timeline in timelines %}
-            <div class="index_content" onclick="seekTo({{ timeline.timetag }}, this)">
-                <p class="main_concept">{{ timeline.content }}</p>
-                <p class="time">{{ timeline.timetag }}</p>
+    <div class="bottom-section">
+        <div class="comment-section">
+            <div class="comment-input-box">
+                <div class="input-header">
+                    <input type="number" id="comment-timetag" placeholder="0" value="0">
+                    <span class="sec-label">초</span>
+                    <input type="file" id="comment-image" accept="image/*">
+                </div>
+                <textarea id="comment-content" placeholder="질문을 남겨보세요!"></textarea>
+                <button id="comment-submit-btn">등록</button>
             </div>
-        {% endfor %}
-    </div>
-</div>
-<div class="bottom">
-    <div class="left">
-        <div class="comment-container">
-            <div class="input-area">
-                <input type="number" id="comment-timetag" placeholder="시간(초)" value="0">
-                <textarea id="comment-content" placeholder="이해가 가지 않는 질문을 등록해주세요!"></textarea>
-                <input type="file" id="comment-image" accept="image/*">
-                <button type="button" id="comment-submit-btn">등록</button>
+
+            <div id="comment-list-container">
+                {% for comment in comments %}
+                <div class="comment-card" id="comment-{{ comment.pk }}">
+                    <div class="card-header">
+                        <span class="timetag-badge" onclick="seekTo({{ comment.timetag }})">
+                            {{ comment.time_str }}
+                        </span>
+                        <span class="username">{{ comment.user.name }}</span>
+                    </div>
+
+                    <div class="card-body">
+                        <p>{{ comment.content }}</p>
+                        {% if comment.image %}
+                        <img src="{{ comment.image.url }}" style="max-width: 200px; margin-top:10px;">
+                        {% endif %}
+                    </div>
+
+                    <div class="card-footer">
+                        <button class="like-btn" 
+                                data-comment-id="{{ comment.pk }}"
+                                data-url="{% url 'piro_index:comment_like_ajax' comment.pk %}">
+                            🔥 궁금해요 <span class="like-count">{{ comment.like_count }}</span>
+                        </button>
+
+                        <button class="reply-toggle-btn" data-comment-id="{{ comment.pk }}">
+                            답글 {{ comment.replies_list|length }}
+                        </button>
+                        
+                        {% if user.role == '운영진' %}
+                        <button class="btn-delete-comment" 
+                                data-comment-id="{{ comment.pk }}"
+                                data-url="{% url 'piro_index:video_comment_delete' comment.pk %}">
+                            삭제
+                        </button>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="reply-area" data-reply-id="{{ comment.pk }}" style="display:none;">
+                        {% for reply in comment.replies_list %}
+                        <div class="reply-item">
+                            <strong>{{ reply.user.name }}</strong>: {{ reply.content }}
+                        </div>
+                        {% endfor %}
+                        
+                        <div class="reply-input-row">
+                            <input type="text" data-reply-input-id="{{ comment.pk }}" placeholder="답글 작성">
+                            <button class="reply-submit-btn" 
+                                    data-comment-id="{{ comment.pk }}"
+                                    data-url="{% url 'piro_index:comment_reply_create_ajax' comment.pk %}">
+                                등록
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
             </div>
         </div>
 
-        <div id="comment-list-container">
-            {% for comment in comments %}
-            <div class="comment-item-card {% if comment.user.role == '운영진' %}staff-style{% endif %}" id="comment-{{ comment.pk }}">
-                
-                <div class="comment-header">
-                    <span class="timetag">{{ comment.timetag }}초</span>
-                    <strong>{{ comment.user.name }}</strong>
-                </div>
-
-                <div class="comment-body">
-                    <p>{{ comment.content }}</p>
-                </div>
-
-                <div class="btn-group">
-                    <button class="like-btn" data-comment-id="{{ comment.pk }}">
-                        👍 (<span class="like-count">{{ comment.like_count }}</span>)
-                    </button>
-
-                    {% if user.role == '운영진' %}
-                    <button class="btn-delete" data-comment-id="{{ comment.pk }}">삭제</button>
-                    {% endif %}
-
-                    <button class="reply-toggle-btn" data-comment-id="{{ comment.pk }}">
-                        답글 {{ comment.replies_list|length }}개
-                    </button>
-                </div>
-
-                <div class="reply-container" data-reply-id="{{ comment.pk }}">
-                    {% for reply in comment.replies_list %}
-                    <div class="reply-item {% if reply.user.role == '운영진' %}staff-style{% endif %}">
-                        <strong>{{ reply.user.name }}</strong>
-                        <p>{{ reply.content }}</p>
-                        <span class="reply-date">{{ reply.created_at }}</span>
-                    </div>
-                    {% endfor %}
-                </div>
-
-                <button class="reply-write-btn" data-comment-id="{{ comment.pk }}">답글 달기</button>
-                
-                <div class="reply-input-container" data-reply-input-id="{{ comment.pk }}">
-                    <textarea class="reply-content" placeholder="답글 작성..."></textarea>
-                    <button class="reply-submit-btn" data-comment-id="{{ comment.pk }}">등록</button>
-                </div>
-            </div> {% endfor %}
-        </div> </div> <div class="graph_section">
-        <canvas id="questionChart"></canvas> 
+        <div class="graph-section">
+            <h3>🔥 질문 공감도 그래프</h3>
+            <div style="height: 300px;">
+                <canvas id="questionChart"></canvas>
+            </div>
+        </div>
     </div>
 </div>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // views.py에서 보낸 JSON 데이터를 JS 변수로 받음
-        const graphData = {{ graph_data_json|safe }};
-        
-        // video_detail.js에 있는 함수 호출
-        if (typeof drawEmpathyGraph === 'function') {
-            drawEmpathyGraph(graphData);
-        }
-    });
-</script>
+
+<script src="{% static 'js/video_detail.js' %}"></script>
 {% endblock %}
