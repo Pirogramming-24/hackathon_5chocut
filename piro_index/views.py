@@ -268,7 +268,7 @@ def video_comment_delete(request, pk):
     
     comment = get_object_or_404(Comment, pk=pk)
     
-    if user_profile.role == '운영진': # 수정
+    if user_profile.role == '운영진' or comment.user == user_profile:
         comment.delete()
         # redirect 대신 JSON을 돌려줘야 JS가 안 터집니다!
         return JsonResponse({'status': 'success'}) 

@@ -42,7 +42,7 @@
         <div class="left">
             <div class="comment-container">
                 <div class="input-area">
-                    <input type="number" id="comment-timetag" placeholder="시간(초)" value="0">
+                    <input type="text" id="comment-timetag" placeholder="시간입력" value="0">
                     <textarea id="comment-content" placeholder="이해가 가지 않는 질문을 등록해주세요!"></textarea>
                     <input type="file" id="comment-image" accept="image/*">
                     <button type="button" id="comment-submit-btn">등록</button>
@@ -71,7 +71,7 @@
                         
                         <button class="reply-write-btn" data-comment-id="{{ comment.pk }}">답글 달기</button>
                         
-                        {% if is_staff %}
+                        {% if is_staff or comment.author == user %}
                         <button class="btn-delete" data-comment-id="{{ comment.pk }}">삭제</button>
                         {% endif %}
 
