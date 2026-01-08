@@ -1,0 +1,106 @@
+{% extends 'piro_index/base.html' %} 
+{% load static %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'css/signup.css' %}">
+{% endblock extra_head %}
+
+{% block content %}
+<div class="account">
+    <img src="{% static 'images/logo.png' %}" alt="로고" class="logo">
+    
+    <div class="signup-box">
+        <form method="POST">
+            {% csrf_token %}
+            {% if error %}
+                <div style="color: red; text-align: center; margin-bottom: 10px; font-weight: bold;">
+                    {{ error }}
+                </div>
+            {% endif %}
+            <div class="input-group">
+                <div class="input-row top">
+                    <input class="input-field id" type="text" name="login_id" placeholder="아이디">
+                </div>
+                <div class="input-row mid">
+                    <input class="input-field pw" type="password" name="password" placeholder="비밀번호">
+                </div>
+                <div class="input-row bot">
+                    <input class="input-field pw-check" type="password" placeholder="비밀번호 재확인">
+                </div>
+            </div>
+            <div class="error-msg" id="pw-error">비밀번호가 일치하지 않습니다.</div>
+
+            <div class="input-group single" style="margin-top: 10px;">
+                <div class="input-row">
+                    <input class="input-field name" type="text" name="name" placeholder="이름">
+                </div>
+            </div>
+
+            <div class="choice-group" style="margin-top: 10px;">
+                <div class="gender-nation-row">
+                    <div class="toggle-box">
+                        <label>
+                            <input type="radio" name="role" value="부원" checked>
+                            <span>부원</span>
+                        </label>
+                        <label>
+                            <input type="radio" name="role" value="운영진">
+                            <span>운영진</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="submit" disabled>가입하기</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const idInput = document.querySelector('.id');
+        const pwInput = document.querySelector('.pw');
+        const pwCheckInput = document.querySelector('.pw-check'); // ✅ 확인창 선택
+        const nameInput = document.querySelector('.name');
+        const submitBtn = document.querySelector('.submit');
+        const errorMsg = document.getElementById('pw-error'); // ✅ 에러 메시지 선택
+
+        function checkInputs() {
+            const idValue = idInput.value.trim();
+            const pwValue = pwInput.value.trim();
+            const pwCheckValue = pwCheckInput.value.trim();
+            const nameValue = nameInput.value.trim();
+
+            // 1. 비밀번호 일치 여부 확인
+            let isPwMatch = false;
+            
+            // 둘 다 값이 있을 때만 비교 시작
+            if (pwValue.length > 0 && pwCheckValue.length > 0) {
+                if (pwValue !== pwCheckValue) {
+                    errorMsg.style.display = 'block'; // 에러 띄움
+                    isPwMatch = false;
+                } else {
+                    errorMsg.style.display = 'none'; // 에러 숨김
+                    isPwMatch = true;
+                }
+            } else {
+                // 하나라도 비어있으면 에러 메시지는 굳이 안 띄움 (하지만 가입은 안 됨)
+                errorMsg.style.display = 'none';
+                isPwMatch = false;
+            }
+
+            // 2. 모든 조건 통과했는지 확인 (아이디, 비번, 비번확인, 이름 다 있어야 함)
+            if (idValue.length > 0 && isPwMatch && nameValue.length > 0) {
+                submitBtn.disabled = false;
+            } else {
+                submitBtn.disabled = true;
+            }
+        }
+
+        const inputs = [idInput, pwInput, pwCheckInput, nameInput];
+        inputs.forEach(input => {
+            input.addEventListener('input', checkInputs);
+        });
+    });
+</script>
+{% endblock %}

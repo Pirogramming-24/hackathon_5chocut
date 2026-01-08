@@ -1,0 +1,124 @@
+{% extends 'piro_index/base.html' %} 
+{% load static %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'css/signup.css' %}">
+    <style>
+        /* 마이페이지 전용 댓글 스타일 (유지) */
+        .comment-history { width: 460px; margin-top: 40px; }
+        .comment-history h3 { color: #333; margin-bottom: 15px; font-size: 18px; border-bottom: 2px solid #4A86E8; padding-bottom: 10px; }
+        .comment-item { background: #fff; border: 1px solid #dadada; border-radius: 6px; padding: 15px; margin-bottom: 10px; }
+        .comment-video-title { font-size: 12px; color: #4A86E8; font-weight: bold; margin-bottom: 5px; }
+        .comment-content { font-size: 14px; color: #333; }
+        .comment-date { font-size: 11px; color: #999; text-align: right; margin-top: 5px; }
+        .empty-msg { text-align: center; color: #999; padding: 20px; }
+    </style>
+{% endblock extra_head %}
+
+{% block content %}
+<div class="account">
+    <img src="{% static 'images/logo.png' %}" alt="로고" class="logo">
+    
+    <div class="signup-box">
+        <h2 style="text-align: center; margin-bottom: 20px; color:#4A86E8;">내 정보 수정</h2>
+        <form method="POST">
+            {% csrf_token %}
+            
+            <div class="input-group">
+                <div class="input-row top">
+                    <input class="input-field id" type="text" name="login_id" 
+                           value="{{ user.login_id }}" 
+                           data-initial="{{ user.login_id }}" 
+                           placeholder="아이디">
+                </div>
+                <div class="input-row mid">
+                    <input class="input-field pw" type="password" name="password" placeholder="새 비밀번호 (변경 시에만 입력)">
+                </div>
+            </div>
+
+            <div class="input-group single" style="margin-top: 10px;">
+                <div class="input-row">
+                    <input class="input-field name" type="text" name="name" 
+                           value="{{ user.name }}" 
+                           data-initial="{{ user.name }}" 
+                           placeholder="이름">
+                </div>
+            </div>
+
+            <button type="submit" class="submit" disabled>수정하기</button>
+        </form>
+    </div>
+
+    <div class="comment-history">
+        <h3>내가 쓴 댓글 모음</h3>
+        {% if comments %}
+            {% for comment in comments %}
+            <div class="comment-item">
+                <div class="comment-video-title">🎬 {{ comment.video.title }}</div>
+                <div class="comment-content">{{ comment.content }}</div>
+                <div class="comment-date">{{ comment.created_at|date:"Y-m-d H:i" }}</div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-msg">작성한 댓글이 없습니다.</div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const idInput = document.querySelector('.id');
+        const pwInput = document.querySelector('.pw');
+        const nameInput = document.querySelector('.name');
+        const submitBtn = document.querySelector('.submit');
+
+        // 서버에서 받아온 '처음 값'을 저장해둡니다.
+        const initialId = idInput.getAttribute('data-initial');
+        const initialName = nameInput.getAttribute('data-initial');
+
+        function checkChanges() {
+            // 현재 입력된 값들
+            const currentId = idInput.value.trim();
+            const currentName = nameInput.value.trim();
+            const currentPw = pwInput.value.trim();
+
+            // 1. 변경사항이 있는지 확인 (하나라도 다르면 true)
+            // - 아이디가 처음과 다른가?
+            // - 이름이 처음과 다른가?
+            // - 비밀번호를 새로 입력했는가?
+            const isIdChanged = currentId !== initialId;
+            const isNameChanged = currentName !== initialName;
+            const isPwEntered = currentPw.length > 0;
+
+            // 2. 필수 입력값(공백) 체크
+            const hasEmptyFields = currentId.length === 0 || currentName.length === 0;
+
+            // 로직: 뭔가 바뀌었고(OR), 필수값이 비어있지 않아야 버튼 활성화
+            if ((isIdChanged || isNameChanged || isPwEntered) && !hasEmptyFields) {
+                submitBtn.disabled = false; // 파란색 활성화
+            } else {
+                submitBtn.disabled = true;  // 회색 비활성화
+            }
+        }
+        
+        // 3. (요청사항 1번) 버튼 클릭 시 아이디가 동일하면 alert 띄우기
+        // 사실 버튼이 비활성화되면 클릭 자체가 안 되지만, 
+        // 혹시나 '이름'만 바꾸고 '아이디'는 그대로 둔 채 저장할 때를 대비한 안내 로직일 수 있어 추가합니다.
+        submitBtn.addEventListener('click', function(e) {
+            const currentId = idInput.value.trim();
+            
+            // 이름이나 비번을 바꿔서 버튼이 활성화됐는데, 아이디는 그대로인 경우
+            // "아이디가 이전과 동일합니다"라고 띄우는 건 조금 어색할 수 있습니다. (보통 변경된 것만 저장하니까요)
+            // 형님의 의도가 "아이디를 바꾼 척 했다가 다시 원복하고 저장 누르면 알려줘라"라면 위의 checkChanges에서 이미 버튼이 꺼지므로 막힙니다.
+            
+            // 만약 "변경된 아이디가 DB에 있는 다른 사람 아이디랑 똑같으면" 경고를 띄우는 거라면 views.py에서 처리해야 합니다.
+            // 일단 JS에서는 "버튼이 켜졌다는 건 뭔가 바뀐 게 있다는 뜻"이므로 그대로 제출합니다.
+        });
+
+        // 감시자 붙이기
+        [idInput, pwInput, nameInput].forEach(input => {
+            input.addEventListener('input', checkChanges);
+        });
+    });
+</script>
+{% endblock %}

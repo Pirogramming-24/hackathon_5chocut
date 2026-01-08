@@ -1,0 +1,98 @@
+* {box-sizing: border-box;}
+html, body, h1, h2, h3, h4, h5, h6,
+p, div, em, sup, sub, code, hr, strong, span, q, blockquote,
+header, footer, aside, nav, article, section, figure, main,
+img, a, table, tr, td, th, thead, tbody, tfoot,
+ul, ol, li, dl, dt, dd, address,
+form,fieldset, legend, input, button, select, option, textarea {
+    margin: 0; padding:0; line-height:1.0;
+    font-size:1.0rem; font-style: normal; font-weight:normal;
+}
+ul,ol,li {list-style : none;}
+table, tr, th, td {border-collapse : collapse;}
+th {text-align:left;}
+a {color : #000; text-decoration:none;}
+textarea {resize:none;}
+fieldset {border : 0;}
+input, button {cursor:pointer; background:none; border:0;}
+.skip{display:none}
+
+body header {
+    
+    background: linear-gradient(90deg, #f0f4f8 0%, #dbeafe 50%, #5b99ff 100%);
+    
+    position: -webkit-sticky; 
+    position: sticky;
+    top: 0;
+    z-index: 999; 
+    width: 100%;
+}
+@keyframes fade-in-blue {
+    from {
+        background-color: transparent;
+        box-shadow: none;
+        backdrop-filter: blur(0px);
+    }
+    to {
+        background-color: rgba(42, 61, 97, 0.95); 
+        box-shadow: 0 2px 15px rgba(0,0,0,0.3);   
+        
+    }
+}
+
+body header .top-header {
+    display: flex; justify-content: space-between;
+    align-items: center;
+    height: 90px; padding: 20px 0 ;
+}
+body header .top-header h1.site-name {
+    font-weight: 800; 
+    text-transform: uppercase;
+    /* color: #fff;  기존 흰색 주석 처리 */
+    color: #4a86e8; /* 사진과 비슷한 파란색 텍스트 */
+    margin: 0; 
+    letter-spacing: 2px;
+    font-size: 40px;
+    margin-left: 90px;
+    
+}
+body header .top-header .menus {
+     display: flex; align-items: center;
+}
+body header .top-header .menus ul {
+    display: flex; list-style: none; align-items: center;
+    margin-right: 50px;
+
+}
+body header .top-header .menus ul li a {
+    padding: 0 12px; 
+    /* color: #fff; 기존 흰색 주석 처리 */
+    color: #333; /* 배경이 밝으므로 글자는 어둡게 */
+    text-decoration: none;
+    font-size: 20px;
+    font-weight: 500;
+}
+
+ /* 해당 기능에 대한 화면일 때 메뉴의 글자색 변화 */
+body header div#Home { view-timeline-name: --section-home; }
+body header .top-header .menus ul li a[href="#Home"] {
+    animation: active-menu-color linear both;
+    animation-timeline: --section-home;
+    /* 화면의 중앙(50%)에 섹션이 들어오면 색이 바뀜 */
+    animation-range: entry 50% exit 50%;
+}
+@keyframes active-menu-color {
+    0%, 100% { 
+        color: #3a95be; 
+    }
+}
+
+/* 메뉴 hover시 글자 색 변화 */
+body header .top-header .menus ul li a:hover {
+    color:#fff;
+    transition: all 0.3s ease-in-out;
+}
+body header .top-header img.logo {
+    width: 70px;
+    margin-left: 50px ;
+}

@@ -1,0 +1,92 @@
+{% extends 'piro_index/base.html' %}
+{% load static %}
+
+{% block title %}Video List - PIRO INDEX{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/video_list.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Video List</h1>
+    {% if is_staff %}
+    <a href="{% url 'piro_index:video_create' %}" class="btn-add">비디오 등록</a>
+    {% endif %}
+</div>
+
+<!-- 검색 및 정렬 컨트롤 -->
+<div class="controls">
+    <form method="get" class="search-box">
+        <input type="hidden" name="sort" value="{{ sort_by }}">
+        <input type="text" name="search" placeholder="비디오 검색..." value="{{ search_query }}">
+        <button type="submit">검색</button>
+    </form>
+    
+    <div class="sort-dropdown">
+        <select id="sort-select" onchange="window.location.href='?sort=' + this.value + '&search={{ search_query }}'">
+            <option value="" disabled {% if not sort_by or sort_by == '' %}selected{% endif %}>정렬기준</option>
+            <option value="latest" {% if sort_by == 'latest' %}selected{% endif %}>최신순</option>
+            <option value="oldest" {% if sort_by == 'oldest' %}selected{% endif %}>오래된순</option>
+            <option value="saves" {% if sort_by == 'saves' %}selected{% endif %}>찜하기순</option>
+        </select>
+    </div>
+</div>
+
+<!-- 비디오 그리드 -->
+<div class="video-grid">
+    {% for video in videos %}
+    <div class="video-card" data-video-id="{{ video.id }}">
+        <!-- 로고 아이콘 (찜하기) -->
+        <div class="logo-icon {% if video.id in saved_video_ids %}saved{% else %}unsaved{% endif %}" 
+             data-video-id="{{ video.id }}">
+            <img src="{% static 'images/logo.png' %}" alt="찜하기" class="logo-img">
+        </div>
+        
+        <!-- 썸네일 -->
+        <div class="thumbnail">
+            {% if video.thumbnail %}
+                <img src="{{ video.thumbnail.url }}" alt="{{ video.title }}" class="thumbnail-img">
+            {% else %}
+                <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
+                    <path d="M20 15L45 30L20 45V15Z" fill="#9CA3AF"/>
+                </svg>
+            {% endif %}
+        </div>
+        
+        <!-- 비디오 정보 -->
+        <div class="video-content">
+            <h3><a href="{% url 'piro_index:video_detail' video.id %}">{{ video.title }}</a></h3>
+        </div>
+    </div>
+    {% empty %}
+    <p class="empty-message">등록된 비디오가 없습니다.</p>
+    {% endfor %}
+</div>
+
+<!-- 페이지네이션 -->
+{% if videos.has_other_pages %}
+<div class="pagination">
+    {% if videos.has_previous %}
+        <a href="?page=1&sort={{ sort_by }}&search={{ search_query }}">처음</a>
+        <a href="?page={{ videos.previous_page_number }}&sort={{ sort_by }}&search={{ search_query }}">이전</a>
+    {% endif %}
+    
+    {% for num in videos.paginator.page_range %}
+        {% if videos.number == num %}
+            <span class="current">{{ num }}</span>
+        {% else %}
+            <a href="?page={{ num }}&sort={{ sort_by }}&search={{ search_query }}">{{ num }}</a>
+        {% endif %}
+    {% endfor %}
+    
+    {% if videos.has_next %}
+        <a href="?page={{ videos.next_page_number }}&sort={{ sort_by }}&search={{ search_query }}">다음</a>
+        <a href="?page={{ videos.paginator.num_pages }}&sort={{ sort_by }}&search={{ search_query }}">마지막</a>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- JS는 여기에 직접 추가 -->
+<script src="{% static 'js/video_list.js' %}"></script>
+{% endblock %}
