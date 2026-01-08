@@ -33,6 +33,7 @@ urlpatterns = [
     # #5 좋아요 == 저도 궁금해요
     path('comment/<int:pk>/like/', views.comment_like_ajax, name='comment_like_ajax'),
 
+    path('video/<int:pk>/stream/', views.serve_video, name='video_stream'),
 ]
 
 if settings.DEBUG:

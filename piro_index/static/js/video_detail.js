@@ -53,18 +53,33 @@ function drawEmpathyGraph(data) {
 }
 function seekTo(seconds, element) {
     const video = document.getElementById('lecture');
-    let targetSeconds = seconds;
+    let targetSeconds = 0;
 
-    // 만약 전달된 값이 "0:10" 같은 글자라면 숫자로 변환합니다.
-    if (typeof seconds === 'string' && seconds.includes(':')) {
-        const parts = seconds.split(':');
-        targetSeconds = (parseInt(parts[0]) * 60) + (parseInt(parts[1]) || 0);
+    // 1. 입력값이 숫자인지 문자열인지 판별해서 초 단위로 변환
+    if (typeof seconds === 'string') {
+        if (seconds.includes(':')) {
+            const parts = seconds.split(':').map(Number);
+            if (parts.length === 3) { // HH:MM:SS
+                targetSeconds = (parts[0] * 3600) + (parts[1] * 60) + parts[2];
+            } else if (parts.length === 2) { // MM:SS
+                targetSeconds = (parts[0] * 60) + parts[1];
+            }
+        } else {
+            targetSeconds = parseFloat(seconds);
+        }
+    } else {
+        targetSeconds = seconds; // 숫자면 그대로 사용
     }
 
-    video.currentTime = targetSeconds;
-    video.play();
+    console.log("이동할 목표 초:", targetSeconds); // 디버깅용
 
-    // 아래 기존 색상 유지 로직은 그대로 두세요.
+    // 2. 영상 이동 로직
+    if (!isNaN(targetSeconds)) {
+        video.currentTime = targetSeconds;
+        video.play().catch(e => console.log("자동 재생 막힘:", e));
+    }
+
+    // 색상 변경 로직
     const allItems = document.querySelectorAll('.index_content');
     allItems.forEach(item => item.classList.remove('selected'));
     if (element) { element.classList.add('selected'); }
@@ -100,6 +115,7 @@ document.getElementById('comment-submit-btn').addEventListener('click', function
     let finalSeconds = 0;
     if (timetagInput.includes(':')) {
         const parts = timetagInput.split(':');
+        
         finalSeconds = (parseInt(parts[0]) * 60) + (parseInt(parts[1]) || 0);
     } else {
         finalSeconds = parseInt(timetagInput) || 0;

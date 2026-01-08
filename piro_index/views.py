@@ -12,6 +12,9 @@ import json
 from django.db import transaction
 from django.http import HttpResponse, JsonResponse 
 from django.urls import reverse
+import os
+import re
+from django.http import StreamingHttpResponse, FileResponse
 
 #비디오 상세 페이지 조회
 def video_detail(request, pk):
@@ -561,3 +564,47 @@ def video_delete(request, pk):
     target_video = get_object_or_404(Video, pk=pk)
     target_video.delete()
     return redirect('piro_index:video_list')
+
+def serve_video(request, pk):
+    """비디오 스트리밍 (Range Request 지원)"""
+    video = get_object_or_404(Video, pk=pk)
+    video_path = video.video_path.path  # 실제 파일 경로
+    
+    # 파일 크기 가져오기
+    file_size = os.path.getsize(video_path)
+    
+    # Range 헤더 확인
+    range_header = request.META.get('HTTP_RANGE', '').strip()
+    range_match = re.match(r'bytes=(\d+)-(\d*)', range_header)
+    
+    # Range Request 처리
+    if range_match:
+        first_byte = int(range_match.group(1))
+        last_byte = int(range_match.group(2)) if range_match.group(2) else file_size - 1
+        length = last_byte - first_byte + 1
+        
+        # 파일의 일부분만 읽기
+        with open(video_path, 'rb') as video_file:
+            video_file.seek(first_byte)
+            data = video_file.read(length)
+        
+        # 206 Partial Content 응답
+        response = StreamingHttpResponse(
+            iter([data]),
+            status=206,
+            content_type='video/mp4'
+        )
+        response['Content-Length'] = str(length)
+        response['Content-Range'] = f'bytes {first_byte}-{last_byte}/{file_size}'
+        response['Accept-Ranges'] = 'bytes'
+        
+    else:
+        # 일반 요청 (Range 없음)
+        response = FileResponse(
+            open(video_path, 'rb'),
+            content_type='video/mp4'
+        )
+        response['Content-Length'] = str(file_size)
+        response['Accept-Ranges'] = 'bytes'
+    
+    return response

@@ -23,7 +23,7 @@
     <div class="top">
         <div class="video_play">
             <video id="lecture" controls poster="{% static 'images/video_error.png' %}">
-                <source src="{{ video.video_path.url }}" type="video/mp4">
+                <source src="{% url 'piro_index:video_stream' video.pk %}" type="video/mp4">
             </video>
             <h3>{{ video.title }}</h3>
         </div>
