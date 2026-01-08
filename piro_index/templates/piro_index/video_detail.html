@@ -71,7 +71,7 @@
                         
                         <button class="reply-write-btn" data-comment-id="{{ comment.pk }}">답글 달기</button>
                         
-                        {% if is_staff or comment.author == user %}
+                        {% if is_staff or comment.user == user %}
                         <button class="btn-delete" data-comment-id="{{ comment.pk }}">삭제</button>
                         {% endif %}
 

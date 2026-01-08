@@ -25,14 +25,19 @@ def video_detail(request, pk):
     timelines = Timeline.objects.filter(video=target_video).order_by('timetag')
 
     user_id = request.session.get('user_id')
+    user_profile = None 
     is_staff = False
     
     if user_id:
         try:
-            profile = Profile.objects.get(id=user_id)
-            if profile.role == "운영진":
+            # [수정 전] profile = Profile.objects.get(id=user_id)
+            # [수정 후] 변수 이름을 user_profile로 맞추거나, profile 값을 넣어줘야 함!
+            user_profile = Profile.objects.get(id=user_id) 
+            
+            if user_profile.role == "운영진":
                 is_staff = True
         except Profile.DoesNotExist:
+            user_profile = None # 없으면 확실히 None
             is_staff = False
 
     # 그래프 데이터 생성
@@ -49,6 +54,7 @@ def video_detail(request, pk):
         'timelines': timelines,
         'comment_count': comments.count(),
         'is_staff': is_staff,
+        'user': user_profile,
         'graph_data_json': json.dumps(graph_data), # 그래프 데이터도 여기에 포함
     }
         
